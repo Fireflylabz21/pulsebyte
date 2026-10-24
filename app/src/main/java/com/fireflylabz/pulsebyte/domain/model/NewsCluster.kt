@@ -1,5 +1,8 @@
 package com.fireflylabz.pulsebyte.domain.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class NewsCluster(
     val id: String,
     val title: String,
@@ -13,6 +16,7 @@ data class NewsCluster(
     val articles: List<NewsArticle> = emptyList()
 )
 
+@Serializable
 data class NewsArticle(
     val id: String,
     val sourceName: String,

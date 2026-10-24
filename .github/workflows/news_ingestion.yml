@@ -1,8 +1,8 @@
-name: PulseAI News Ingestion & AI Synthesis
+name: PulseAI News Ingestion & Multi-LLM Synthesis
 
 on:
   schedule:
-    - cron: '*/30 * * * *' # Runs every 30 minutes automatically
+    - cron: '0 * * * *' # Runs every 1 hour (60 minutes)
   workflow_dispatch: # Allows manual trigger anytime from GitHub Actions UI
 
 jobs:
@@ -20,9 +20,11 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Run Ingestion Script
+      - name: Run Ingestion Script with LLM Fallbacks
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY_FALLBACK: ${{ secrets.GEMINI_API_KEY_FALLBACK }}
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
         run: node scripts/ingest_news.js
