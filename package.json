@@ -1,0 +1,12 @@
+{
+  "name": "pulseai-ingestion",
+  "version": "1.0.0",
+  "description": "PulseAI Automated News Ingestion and Gemini Synthesis Worker",
+  "main": "scripts/ingest_news.js",
+  "scripts": {
+    "ingest": "node scripts/ingest_news.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0"
+  }
+}
