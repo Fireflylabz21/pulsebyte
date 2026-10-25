@@ -11,6 +11,7 @@ import json
 import datetime
 from urllib.parse import urlparse
 import feedparser
+import requests
 import google.generativeai as genai
 from supabase import create_client, Client
 
@@ -94,28 +95,73 @@ def validate_news_cluster(cluster):
     return len(errors) == 0, errors
 
 def call_gemini(api_key, raw_text):
-    """Calls Gemini 3.5 Flash Lite to synthesize news into JSON format."""
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-3.5-flash-lite')
-    response = model.generate_content(f"{NEWS_SYNTHESIS_PROMPT}\n\nRAW NEWS TEXT:\n{raw_text}")
+    """Calls Gemini API (trying gemini-3.5-flash-lite, with fallbacks to gemini-1.5-flash) to synthesize news into JSON."""
+    cleaned_key = api_key.strip()
+    genai.configure(api_key=cleaned_key)
 
-    text_result = response.text.strip()
-    if text_result.startswith("```json"):
-        text_result = text_result[7:]
-    if text_result.endswith("```"):
-        text_result = text_result[:-3]
+    models_to_try = ['gemini-3.5-flash-lite', 'gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-2.0-flash-exp']
+    last_error = None
 
-    parsed = json.loads(text_result.strip())
+    for model_name in models_to_try:
+        try:
+            print(f"Attempting synthesis with model '{model_name}'...")
+            model = genai.GenerativeModel(model_name)
+            response = model.generate_content(f"{NEWS_SYNTHESIS_PROMPT}\n\nRAW NEWS TEXT:\n{raw_text}")
+
+            text_result = response.text.strip()
+            if text_result.startswith("```json"):
+                text_result = text_result[7:]
+            if text_result.startswith("```"):
+                text_result = text_result[3:]
+            if text_result.endswith("```"):
+                text_result = text_result[:-3]
+
+            parsed = json.loads(text_result.strip())
+            parsed["embedding"] = [0.015] * 384
+            return parsed
+        except Exception as e:
+            print(f"Model '{model_name}' failed: {e}")
+            last_error = e
+
+    raise last_error
+
+def call_grok(api_key, raw_text):
+    """Calls Grok (xAI API) to synthesize news into JSON format."""
+    cleaned_key = api_key.strip()
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {cleaned_key}"
+    }
+    payload = {
+        "model": "grok-beta",
+        "messages": [
+            {"role": "system", "content": "You are an objective news editor that outputs strictly valid JSON only."},
+            {"role": "user", "content": f"{NEWS_SYNTHESIS_PROMPT}\n\nRAW NEWS TEXT:\n{raw_text}"}
+        ],
+        "temperature": 0.2
+    }
+    response = requests.post("https://api.x.ai/v1/chat/completions", headers=headers, json=payload, timeout=30)
+    response.raise_for_status()
+    data = response.json()
+    content = data["choices"][0]["message"]["content"].strip()
+    if content.startswith("```json"):
+        content = content[7:]
+    if content.startswith("```"):
+        content = content[3:]
+    if content.endswith("```"):
+        content = content[:-3]
+
+    parsed = json.loads(content.strip())
     parsed["embedding"] = [0.015] * 384
     return parsed
 
 def synthesize_news_with_llm_fallback(raw_text):
-    """Tries Gemini 3.5 Flash Lite -> Alternate Gemini -> Grok (xAI) for live news synthesis."""
+    """Tries Primary Gemini -> Fallback Gemini -> Grok (xAI) for live news synthesis."""
 
-    # 1. Try Primary Gemini API Key with Gemini 3.5 Flash Lite
+    # 1. Try Primary Gemini API Key
     if GEMINI_API_KEY:
         try:
-            print("Attempting AI synthesis with Primary Gemini API Key (Gemini 3.5 Flash Lite)...")
+            print("Attempting AI synthesis with Primary Gemini API Key...")
             candidate_cluster = call_gemini(GEMINI_API_KEY, raw_text)
             is_valid, errors = validate_news_cluster(candidate_cluster)
             if not is_valid:
@@ -140,7 +186,7 @@ def synthesize_news_with_llm_fallback(raw_text):
     if GROK_API_KEY:
         try:
             print("Attempting AI synthesis with Grok (xAI) Fallback Key...")
-            candidate_cluster = call_gemini(GROK_API_KEY, raw_text)
+            candidate_cluster = call_grok(GROK_API_KEY, raw_text)
             is_valid, errors = validate_news_cluster(candidate_cluster)
             if not is_valid:
                 raise ValueError(f"Guardrails failed: {', '.join(errors)}")
