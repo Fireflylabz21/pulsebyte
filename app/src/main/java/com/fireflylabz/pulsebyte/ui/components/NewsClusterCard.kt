@@ -29,7 +29,7 @@ fun NewsClusterCard(
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
         Column(modifier = Modifier.padding(18.dp)) {
-            // Header Row: Category & Metadata
+            // Header Row: Category & Metadata (with reading time)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -47,7 +47,7 @@ fun NewsClusterCard(
                     )
                 }
                 Text(
-                    text = "${cluster.publishedTimeAgo} • ${cluster.sourcesCount} sources",
+                    text = "${cluster.publishedTimeAgo} • 1 min read",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

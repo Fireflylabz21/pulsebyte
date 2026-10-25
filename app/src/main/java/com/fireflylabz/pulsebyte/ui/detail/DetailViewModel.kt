@@ -19,23 +19,38 @@ sealed interface DetailUiState {
 }
 
 class DetailViewModel(
-    private val clusterId: String,
+    private val initialClusterId: String,
     private val repository: NewsRepository = NewsRepositoryImpl()
 ) : ViewModel() {
 
+    private var allClusters: List<NewsCluster> = emptyList()
+    private val _currentIndex = MutableStateFlow(0)
     private val _aiResponse = MutableStateFlow<String?>(null)
     private val _isAskingAi = MutableStateFlow(false)
 
+    init {
+        viewModelScope.launch {
+            repository.getTrendingClusters().collect { list ->
+                allClusters = list
+                val idx = list.indexOfFirst { it.id == initialClusterId }
+                if (idx != -1) {
+                    _currentIndex.value = idx
+                }
+            }
+        }
+    }
+
     val uiState: StateFlow<DetailUiState> = combine(
-        repository.getClusterDetail(clusterId),
+        _currentIndex,
         _aiResponse,
         _isAskingAi
-    ) { cluster, response, asking ->
-        if (cluster == null) {
-            DetailUiState.Error("Story not found")
+    ) { index, response, asking ->
+        if (allClusters.isEmpty()) {
+            DetailUiState.Loading
         } else {
+            val safeIndex = index.coerceIn(0, allClusters.size - 1)
             DetailUiState.Success(
-                cluster = cluster,
+                cluster = allClusters[safeIndex],
                 aiResponse = response,
                 isAskingAi = asking
             )
@@ -46,11 +61,26 @@ class DetailViewModel(
         initialValue = DetailUiState.Loading
     )
 
+    fun moveToNext() {
+        if (allClusters.isNotEmpty() && _currentIndex.value < allClusters.size - 1) {
+            _currentIndex.value++
+            _aiResponse.value = null
+        }
+    }
+
+    fun moveToPrevious() {
+        if (allClusters.isNotEmpty() && _currentIndex.value > 0) {
+            _currentIndex.value--
+            _aiResponse.value = null
+        }
+    }
+
     fun askAi(query: String) {
         if (query.isBlank()) return
+        val currentCluster = allClusters.getOrNull(_currentIndex.value) ?: return
         viewModelScope.launch {
             _isAskingAi.value = true
-            val result = repository.askAiAboutStory(clusterId, query)
+            val result = repository.askAiAboutStory(currentCluster.id, query)
             _aiResponse.value = result.getOrDefault("Could not generate AI response.")
             _isAskingAi.value = false
         }
