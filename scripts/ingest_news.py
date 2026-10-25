@@ -1,6 +1,6 @@
 """
 PulseAI Automated News Ingestion & Multi-LLM Synthesis Worker (Python Edition)
-Fetches live RSS news feeds across 12 topics (including Enterprise AI and India),
+Fetches live RSS news feeds across 12 topics, resolves destination article URLs,
 synthesizes via Gemini 3.5 Flash Lite (with alternate Gemini & Grok fallbacks),
 runs editorial guardrails, generates vector embeddings, captures source links and names,
 and upserts into Supabase story_clusters and raw_articles tables.
@@ -81,6 +81,30 @@ VALID_TOPICS = [
     "Enterprise AI",
     "India"
 ]
+
+def resolve_final_url(url):
+    """Follows redirects to resolve the actual destination article web URL instead of RSS search/feed links."""
+    if not url:
+        return url
+    try:
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        response = requests.head(url, headers=headers, allow_redirects=True, timeout=5)
+        final_url = response.url
+        if final_url and "news.google.com" not in final_url:
+            return final_url
+    except Exception:
+        pass
+
+    try:
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        response = requests.get(url, headers=headers, allow_redirects=True, timeout=5)
+        final_url = response.url
+        if final_url and "news.google.com" not in final_url:
+            return final_url
+    except Exception:
+        pass
+
+    return url
 
 def validate_news_cluster(cluster):
     """Editorial guardrails: checks schema, title length, bullet count, and category."""
@@ -280,13 +304,15 @@ def run_ingestion_pipeline():
                 published = entry.get("published", datetime.datetime.now(datetime.timezone.utc).isoformat())
 
                 if link and link not in existing_urls:
+                    resolved_link = resolve_final_url(link)
                     topic_articles.append({
                         "title": title,
                         "summary": summary,
-                        "link": link,
+                        "link": resolved_link,
                         "published": published
                     })
                     existing_urls.add(link)
+                    existing_urls.add(resolved_link)
 
         if not topic_articles:
             print(f"[{topic}] No new articles found.")
@@ -307,7 +333,7 @@ def run_ingestion_pipeline():
                 if domain and domain not in source_domains:
                     source_domains.append(domain)
 
-            primary_source_url = batch[0]["link"] if batch else ""
+            primary_source_url = batch[0]["link"] if batch else "https://news.google.com"
             source_names_str = " • ".join(source_domains) if source_domains else "Verified Media Outlets"
 
             cluster_payload = {
