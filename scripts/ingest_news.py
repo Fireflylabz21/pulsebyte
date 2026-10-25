@@ -78,7 +78,7 @@ def call_gemini(api_key, raw_text):
     return parsed
 
 def synthesize_news_with_llm_fallback(raw_text):
-    """Tries Primary Gemini -> Fallback Gemini -> Grok (xAI) for news synthesis."""
+    """Tries Primary Gemini -> Fallback Gemini -> Grok (xAI) for news synthesis without hardcoded mocks."""
 
     # 1. Try Primary Gemini API Key
     if GEMINI_API_KEY:
@@ -104,22 +104,22 @@ def synthesize_news_with_llm_fallback(raw_text):
         except Exception as e:
             print(f"Alternate Gemini key failed: {e}")
 
-    # 3. Fallback to default synthesized cluster if LLMs are offline
-    print("Using verified fallback synthesis payload...")
-    fallback_cluster = {
-        "objective_title": "Global Markets Surge on AI & Cloud Infrastructure Expansion",
-        "ai_summary_bullets": [
-            "Cross-border technology investments reached record highs in Q3.",
-            "Cloud providers committed robust capital expenditures for green energy integration.",
-            "Regulatory frameworks established clear guidelines for autonomous systems."
-        ],
-        "category": "FINANCE",
-        "embedding": [0.015] * 384
-    }
-    return fallback_cluster
+    # 3. Try Grok (xAI) Fallback Key
+    if GROK_API_KEY:
+        try:
+            print("Attempting AI synthesis with Grok (xAI) Fallback Key...")
+            candidate_cluster = call_gemini(GROK_API_KEY, raw_text)
+            is_valid, errors = validate_news_cluster(candidate_cluster)
+            if not is_valid:
+                raise ValueError(f"Guardrails failed: {', '.join(errors)}")
+            return candidate_cluster
+        except Exception as e:
+            print(f"Grok fallback key failed: {e}")
+
+    raise RuntimeError("Critical Error: All LLM providers and fallback keys failed to synthesize news.")
 
 def run_ingestion_pipeline():
-    print("Starting PulseAI Python Ingestion & Multi-LLM Synthesis Pipeline...")
+    print("Starting PulseAI Python Ingestion & LLM Synthesis Pipeline...")
 
     # Parse RSS feeds using feedparser
     feed_url = "https://feeds.reuters.com/reuters/topNews"
@@ -128,6 +128,7 @@ def run_ingestion_pipeline():
 
     raw_text = "\n".join([entry.get("title", "") + " " + entry.get("summary", "") for entry in feed.entries[:5]])
     if not raw_text.strip():
+        print("Warning: RSS feed returned empty text. Using general current events feed context.")
         raw_text = "Global financial markets and technology sectors experienced significant growth driven by advancements in cloud and AI infrastructure."
 
     synthesized_cluster = synthesize_news_with_llm_fallback(raw_text)
