@@ -7,8 +7,6 @@ interface NewsRepository {
     fun getTrendingClusters(): Flow<List<NewsCluster>>
     fun getClustersByCategory(category: String): Flow<List<NewsCluster>>
     fun getClusterDetail(clusterId: String): Flow<NewsCluster?>
-    fun getSavedClusters(): Flow<List<NewsCluster>>
     suspend fun refreshNewsFeed(): Result<Unit>
     suspend fun askAiAboutStory(clusterId: String, query: String): Result<String>
-    suspend fun toggleBookmark(clusterId: String)
 }

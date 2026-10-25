@@ -6,9 +6,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Bookmark
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -19,7 +16,6 @@ import com.fireflylabz.pulsebyte.ui.detail.DetailViewModel
 import com.fireflylabz.pulsebyte.ui.feed.HomeFeedViewModel
 import com.fireflylabz.pulsebyte.ui.screens.DetailScreen
 import com.fireflylabz.pulsebyte.ui.screens.HomeScreen
-import com.fireflylabz.pulsebyte.ui.screens.SavedScreen
 import com.fireflylabz.pulsebyte.ui.theme.PulseByteTheme
 
 class MainActivity : ComponentActivity() {
@@ -31,43 +27,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             PulseByteTheme {
                 val navController = rememberNavController()
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentRoute = navBackStackEntry?.destination?.route
-
-                val showBottomNav = currentRoute == "home" || currentRoute == "saved"
 
                 Scaffold(
-                    modifier = Modifier.fillMaxSize(),
-                    bottomBar = {
-                        if (showBottomNav) {
-                            NavigationBar {
-                                NavigationBarItem(
-                                    icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
-                                    label = { Text("Feed") },
-                                    selected = currentRoute == "home",
-                                    onClick = {
-                                        if (currentRoute != "home") {
-                                            navController.navigate("home") {
-                                                popUpTo("home") { inclusive = true }
-                                            }
-                                        }
-                                    }
-                                )
-                                NavigationBarItem(
-                                    icon = { Icon(Icons.Default.Bookmark, contentDescription = "Saved") },
-                                    label = { Text("Saved") },
-                                    selected = currentRoute == "saved",
-                                    onClick = {
-                                        if (currentRoute != "saved") {
-                                            navController.navigate("saved") {
-                                                popUpTo("home")
-                                            }
-                                        }
-                                    }
-                                )
-                            }
-                        }
-                    }
+                    modifier = Modifier.fillMaxSize()
                 ) { innerPadding ->
                     NavHost(
                         navController = navController,
@@ -76,14 +38,6 @@ class MainActivity : ComponentActivity() {
                     ) {
                         composable("home") {
                             HomeScreen(
-                                viewModel = homeFeedViewModel,
-                                onClusterClick = { clusterId ->
-                                    navController.navigate("detail/$clusterId")
-                                }
-                            )
-                        }
-                        composable("saved") {
-                            SavedScreen(
                                 viewModel = homeFeedViewModel,
                                 onClusterClick = { clusterId ->
                                     navController.navigate("detail/$clusterId")

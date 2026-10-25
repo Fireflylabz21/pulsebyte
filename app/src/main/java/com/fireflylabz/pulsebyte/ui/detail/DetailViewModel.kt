@@ -55,10 +55,4 @@ class DetailViewModel(
             _isAskingAi.value = false
         }
     }
-
-    fun toggleBookmark() {
-        viewModelScope.launch {
-            repository.toggleBookmark(clusterId)
-        }
-    }
 }

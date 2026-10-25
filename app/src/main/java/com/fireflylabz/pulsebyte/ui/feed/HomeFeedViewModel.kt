@@ -14,7 +14,6 @@ sealed interface HomeFeedUiState {
         val selectedCategory: String = "All",
         val searchQuery: String = "",
         val clusters: List<NewsCluster> = emptyList(),
-        val savedClusters: List<NewsCluster> = emptyList(),
         val isRefreshing: Boolean = false
     ) : HomeFeedUiState
     data class Error(val message: String) : HomeFeedUiState
@@ -43,12 +42,10 @@ class HomeFeedViewModel(
                 it.summaryBullets.any { bullet -> bullet.contains(query, ignoreCase = true) }
             }
         }
-        val saved = clusters.filter { it.isSaved }
         HomeFeedUiState.Success(
             selectedCategory = category,
             searchQuery = query,
             clusters = finalClusters,
-            savedClusters = saved,
             isRefreshing = refreshing
         )
     }.stateIn(
@@ -70,12 +67,6 @@ class HomeFeedViewModel(
             _isRefreshing.value = true
             repository.refreshNewsFeed()
             _isRefreshing.value = false
-        }
-    }
-
-    fun toggleBookmark(clusterId: String) {
-        viewModelScope.launch {
-            repository.toggleBookmark(clusterId)
         }
     }
 }

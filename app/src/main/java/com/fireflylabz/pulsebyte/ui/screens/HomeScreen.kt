@@ -7,7 +7,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -41,7 +40,8 @@ fun HomeScreen(
                         Icon(Icons.Default.Refresh, contentDescription = "Refresh Feed")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface),
+                windowInsets = WindowInsets(0, 0, 0, 0)
             )
         }
     ) { paddingValues ->
@@ -62,26 +62,13 @@ fun HomeScreen(
                     }
                 }
                 is HomeFeedUiState.Success -> {
-                    // Search Bar
-                    OutlinedTextField(
-                        value = state.searchQuery,
-                        onValueChange = { viewModel.onSearchQueryChanged(it) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        placeholder = { Text("Search stories or key facts...") },
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                        shape = MaterialTheme.shapes.medium,
-                        singleLine = true
-                    )
-
                     // Categories Horizontal Scroll
                     val categories = listOf("All", "WORLD", "TECH", "FINANCE", "BUSINESS", "SCIENCE", "POLITICS", "ENTERTAINMENT", "SPORTS", "LIFESTYLE", "LOCAL")
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .horizontalScroll(rememberScrollState())
-                            .padding(horizontal = 16.dp, vertical = 4.dp),
+                            .padding(horizontal = 16.dp, vertical = 6.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         categories.forEach { cat ->
@@ -94,7 +81,7 @@ fun HomeScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
 
                     if (state.clusters.isEmpty()) {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -103,13 +90,12 @@ fun HomeScreen(
                     } else {
                         LazyColumn(
                             modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(bottom = 80.dp)
+                            contentPadding = PaddingValues(bottom = 16.dp)
                         ) {
                             items(state.clusters, key = { it.id }) { cluster ->
                                 NewsClusterCard(
                                     cluster = cluster,
-                                    onCardClick = { onClusterClick(cluster.id) },
-                                    onBookmarkClick = { viewModel.toggleBookmark(cluster.id) }
+                                    onCardClick = { onClusterClick(cluster.id) }
                                 )
                             }
                         }
