@@ -1,6 +1,6 @@
 """
 PulseAI Automated News Ingestion & Multi-LLM Synthesis Worker (Python Edition)
-Fetches RSS news feeds, synthesizes via Gemini 1.5 Flash (with alternate Gemini & Grok fallbacks),
+Fetches live RSS news feeds, synthesizes via Gemini 1.5 Flash (with alternate Gemini & Grok fallbacks),
 runs editorial guardrails, generates vector embeddings, and upserts into Supabase.
 """
 
@@ -28,8 +28,8 @@ NEWS_SYNTHESIS_PROMPT = """
 You are an objective news editor. You are provided with raw news articles or RSS text covering a recent event.
 
 INSTRUCTIONS:
-1. Formulate a concise, clickbait-free objective title (Max 12 words).
-2. Generate EXACTLY 3 key bullet points synthesized strictly from factual claims across sources.
+1. Formulate a concise, clickbait-free objective title (Max 12 words) capturing the core event.
+2. Generate EXACTLY 3 key bullet points synthesized strictly from factual claims across the provided text.
 3. Categorize into ONE of: [WORLD, TECH, FINANCE, BUSINESS, SCIENCE, POLITICS, ENTERTAINMENT, SPORTS, LIFESTYLE, LOCAL].
 
 OUTPUT FORMAT (JSON ONLY):
@@ -78,7 +78,7 @@ def call_gemini(api_key, raw_text):
     return parsed
 
 def synthesize_news_with_llm_fallback(raw_text):
-    """Tries Primary Gemini -> Fallback Gemini -> Grok (xAI) for news synthesis without hardcoded mocks."""
+    """Tries Primary Gemini -> Fallback Gemini -> Grok (xAI) for live news synthesis without hardcoded mocks."""
 
     # 1. Try Primary Gemini API Key
     if GEMINI_API_KEY:
@@ -119,23 +119,35 @@ def synthesize_news_with_llm_fallback(raw_text):
     raise RuntimeError("Critical Error: All LLM providers and fallback keys failed to synthesize news.")
 
 def run_ingestion_pipeline():
-    print("Starting PulseAI Python Ingestion & LLM Synthesis Pipeline...")
+    print("Starting PulseAI Live RSS Ingestion & Gemini Synthesis Pipeline...")
 
-    # Parse RSS feeds using feedparser
-    feed_url = "https://feeds.reuters.com/reuters/topNews"
-    feed = feedparser.parse(feed_url)
-    print(f"Parsed {len(feed.entries)} raw articles from RSS feed.")
+    # Fetch live RSS feeds from BBC News
+    rss_feeds = [
+        "https://feeds.bbci.co.uk/news/world/rss.xml",
+        "https://feeds.bbci.co.uk/news/technology/rss.xml",
+        "https://feeds.bbci.co.uk/news/business/rss.xml"
+    ]
 
-    raw_text = "\n".join([entry.get("title", "") + " " + entry.get("summary", "") for entry in feed.entries[:5]])
+    all_articles = []
+    for url in rss_feeds:
+        feed = feedparser.parse(url)
+        print(f"Parsed {len(feed.entries)} entries from {url}")
+        for entry in feed.entries[:3]:
+            title = entry.get("title", "")
+            summary = entry.get("summary", "")
+            all_articles.append(f"Title: {title}\nSummary: {summary}")
+
+    raw_text = "\n\n".join(all_articles)
     if not raw_text.strip():
-        print("Warning: RSS feed returned empty text. Using general current events feed context.")
-        raw_text = "Global financial markets and technology sectors experienced significant growth driven by advancements in cloud and AI infrastructure."
+        print("Error: Could not fetch articles from live RSS feeds.")
+        sys.exit(1)
 
+    print(f"Aggregated {len(all_articles)} raw news articles for AI synthesis.")
     synthesized_cluster = synthesize_news_with_llm_fallback(raw_text)
 
     response = supabase.table("story_clusters").insert(synthesized_cluster).execute()
-    print("Successfully upserted synthesized story cluster into Supabase:", response)
-    print("PulseAI Python Ingestion Pipeline completed successfully!")
+    print("Successfully upserted live synthesized story cluster into Supabase:", response)
+    print("PulseAI Live Ingestion Pipeline completed successfully!")
 
 if __name__ == "__main__":
     run_ingestion_pipeline()
