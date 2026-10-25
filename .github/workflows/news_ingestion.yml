@@ -2,7 +2,7 @@ name: PulseAI News Ingestion & Multi-LLM Synthesis (Python)
 
 on:
   schedule:
-    - cron: '0 * * * *' # Runs automatically every 1 hour (60 minutes)
+    - cron: '0 */3 * * *' # Runs automatically every 3 hours
   workflow_dispatch: # Allows manual trigger anytime from GitHub Actions UI
 
 jobs:
