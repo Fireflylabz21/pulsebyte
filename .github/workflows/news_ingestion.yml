@@ -1,4 +1,4 @@
-name: PulseAI News Ingestion & Multi-LLM Synthesis
+name: PulseAI News Ingestion & Multi-LLM Synthesis (Python)
 
 on:
   schedule:
@@ -6,26 +6,29 @@ on:
   workflow_dispatch: # Allows manual trigger anytime from GitHub Actions UI
 
 jobs:
-  ingest_news:
-    name: Run News Ingestion & AI Synthesis
+  ingest_news_python:
+    name: Run Python News Ingestion & AI Synthesis
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          node-version: '20'
+          python-version: '3.11'
+          cache: 'pip'
 
-      - name: Install Project Dependencies
-        run: npm install
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-      - name: Execute News Ingestion Worker
+      - name: Execute Python News Ingestion Worker
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_API_KEY_FALLBACK: ${{ secrets.GEMINI_API_KEY_FALLBACK }}
           GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
-        run: node scripts/ingest_news.js
+        run: python scripts/ingest_news.py
