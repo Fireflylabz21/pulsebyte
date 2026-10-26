@@ -34,7 +34,7 @@ You are an objective news editor. You are provided with raw news articles or RSS
 
 INSTRUCTIONS:
 1. Formulate a concise, clickbait-free objective title (Max 12 words) capturing the core event.
-2. Generate EXACTLY 3 key bullet points synthesized strictly from factual claims across the provided text.
+2. Generate EXACTLY 4 key bullet points synthesized strictly from factual claims across the provided text.
 3. Categorize into EXACTLY ONE of the following 12 topics:
    - Politics & Government
    - Crime & Public Safety
@@ -59,7 +59,8 @@ OUTPUT FORMAT (JSON ONLY):
   "ai_summary_bullets": [
     "Fact-based point 1",
     "Fact-based point 2",
-    "Fact-based point 3"
+    "Fact-based point 3",
+    "Fact-based point 4"
   ],
   "is_breaking": false,
   "reading_time_minutes": 2,
@@ -107,15 +108,15 @@ def resolve_final_url(url):
     return url
 
 def validate_news_cluster(cluster):
-    """Editorial guardrails: checks schema, title length, bullet count, and category."""
+    """Editorial guardrails: checks schema, title length, bullet count (4), and category."""
     errors = []
     title = cluster.get("objective_title", "")
     if not title or len(title.split()) > 15:
         errors.append("Invalid or too long objective title.")
 
     bullets = cluster.get("ai_summary_bullets", [])
-    if not isinstance(bullets, list) or len(bullets) != 3:
-        errors.append("AI summary must contain exactly 3 bullets.")
+    if not isinstance(bullets, list) or len(bullets) != 4:
+        errors.append("AI summary must contain exactly 4 bullets.")
 
     category = cluster.get("category")
     if category not in VALID_TOPICS:
@@ -378,7 +379,7 @@ def run_ingestion_pipeline():
         except Exception as e:
             print(f"[{topic}] Failed to synthesize cluster: {e}")
 
-    print(f"Pipeline Execution Complete! Generated {total_clusters_generated} new story clusters and stored {total_articles_inserted} source articles across 12 topics.")
+    print(f"Pipeline Execution Complete! Generated {total_clusters_generated} new story clusters and stored {total_articles_inserted} source articles across 10 topics.")
 
 if __name__ == "__main__":
     run_ingestion_pipeline()
