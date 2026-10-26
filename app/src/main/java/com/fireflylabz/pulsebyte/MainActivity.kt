@@ -13,13 +13,17 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
-import com.fireflylabz.pulsebyte.ui.detail.DetailViewModel
 import com.fireflylabz.pulsebyte.ui.feed.HomeFeedViewModel
+import com.fireflylabz.pulsebyte.ui.flashcard.StoryFlashcardScreen
+import com.fireflylabz.pulsebyte.ui.flashcard.StoryFlashcardViewModel
 import com.fireflylabz.pulsebyte.ui.screens.AboutScreen
-import com.fireflylabz.pulsebyte.ui.screens.DetailScreen
+import com.fireflylabz.pulsebyte.ui.screens.BookmarksScreen
 import com.fireflylabz.pulsebyte.ui.screens.HomeScreen
 import com.fireflylabz.pulsebyte.ui.screens.WebReaderScreen
 import com.fireflylabz.pulsebyte.ui.theme.PulseByteTheme
+import java.net.URLDecoder
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 class MainActivity : ComponentActivity() {
 
@@ -28,6 +32,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
+
         setContent {
             PulseByteTheme {
                 val navController = rememberNavController()
@@ -43,11 +48,26 @@ class MainActivity : ComponentActivity() {
                         composable("home") {
                             HomeScreen(
                                 viewModel = homeFeedViewModel,
-                                onClusterClick = { clusterId ->
-                                    navController.navigate("detail/$clusterId")
+                                onCategoryClick = { category ->
+                                    val encodedCat = URLEncoder.encode(category, StandardCharsets.UTF_8.toString())
+                                    navController.navigate("flashcard/$encodedCat")
+                                },
+                                onBookmarksClick = {
+                                    navController.navigate("bookmarks")
                                 },
                                 onAboutClick = {
                                     navController.navigate("about")
+                                }
+                            )
+                        }
+                        composable("bookmarks") {
+                            BookmarksScreen(
+                                viewModel = homeFeedViewModel,
+                                onBackClick = { navController.popBackStack() },
+                                onClusterClick = { sourceUrl ->
+                                    val targetUrl = sourceUrl.takeIf { it.isNotBlank() } ?: "https://news.google.com"
+                                    val encodedUrl = URLEncoder.encode(targetUrl, StandardCharsets.UTF_8.toString())
+                                    navController.navigate("web_reader/$encodedUrl")
                                 }
                             )
                         }
@@ -59,13 +79,14 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable(
-                            route = "detail/{clusterId}",
-                            arguments = listOf(navArgument("clusterId") { type = NavType.StringType })
+                            route = "flashcard/{category}",
+                            arguments = listOf(navArgument("category") { type = NavType.StringType })
                         ) { backStackEntry ->
-                            val clusterId = backStackEntry.arguments?.getString("clusterId") ?: ""
-                            val detailViewModel = remember(clusterId) { DetailViewModel(clusterId) }
-                            DetailScreen(
-                                viewModel = detailViewModel,
+                            val encodedCat = backStackEntry.arguments?.getString("category") ?: ""
+                            val decodedCat = URLDecoder.decode(encodedCat, StandardCharsets.UTF_8.toString())
+                            val flashcardViewModel = remember(decodedCat) { StoryFlashcardViewModel(decodedCat) }
+                            StoryFlashcardScreen(
+                                viewModel = flashcardViewModel,
                                 onBackClick = { navController.popBackStack() },
                                 onReadOriginalClick = { encodedUrl ->
                                     navController.navigate("web_reader/$encodedUrl")
@@ -77,7 +98,7 @@ class MainActivity : ComponentActivity() {
                             arguments = listOf(navArgument("url") { type = NavType.StringType })
                         ) { backStackEntry ->
                             val encodedUrl = backStackEntry.arguments?.getString("url") ?: ""
-                            val decodedUrl = java.net.URLDecoder.decode(encodedUrl, java.nio.charset.StandardCharsets.UTF_8.toString())
+                            val decodedUrl = URLDecoder.decode(encodedUrl, StandardCharsets.UTF_8.toString())
                             WebReaderScreen(
                                 url = decodedUrl,
                                 onBackClick = { navController.popBackStack() }

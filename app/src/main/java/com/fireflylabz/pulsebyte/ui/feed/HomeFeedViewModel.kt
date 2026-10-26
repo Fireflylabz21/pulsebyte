@@ -27,19 +27,38 @@ class HomeFeedViewModel(
     private val _searchQuery = MutableStateFlow("")
     private val _isRefreshing = MutableStateFlow(false)
 
+    // Cache clusters in memory to prevent network refetching on category switching / typing
+    private val _rawClusters = repository.getTrendingClusters()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Lazily,
+            initialValue = emptyList()
+        )
+
     val uiState: StateFlow<HomeFeedUiState> = combine(
         _selectedCategory,
         _searchQuery,
         _isRefreshing,
-        repository.getTrendingClusters()
+        _rawClusters
     ) { category, query, refreshing, clusters ->
-        val filteredByCategory = if (category == "All") clusters else clusters.filter { it.category.equals(category, ignoreCase = true) }
-        val finalClusters = if (query.isBlank()) {
-            filteredByCategory
+        val filteredByCategory = if (category == "All") {
+            clusters
         } else {
-            filteredByCategory.filter { 
-                it.title.contains(query, ignoreCase = true) || 
-                it.summaryBullets.any { bullet -> bullet.contains(query, ignoreCase = true) }
+            clusters.filter { it.displayCategory.equals(category, ignoreCase = true) }
+        }
+
+        // Sort news by latest to oldest
+        val sortedByLatest = filteredByCategory.sortedWith(
+            compareByDescending<NewsCluster> { it.createdAt ?: "" }
+                .thenByDescending { it.id }
+        )
+
+        val finalClusters = if (query.isBlank()) {
+            sortedByLatest
+        } else {
+            sortedByLatest.filter { 
+                it.displayTitle.contains(query, ignoreCase = true) || 
+                it.displayBullets.any { bullet -> bullet.contains(query, ignoreCase = true) }
             }
         }
         HomeFeedUiState.Success(
