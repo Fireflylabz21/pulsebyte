@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.fireflylabz.pulsebyte"
+    namespace = "com.fireflylabz.taptap"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.fireflylabz.pulsebyte"
+        applicationId = "com.fireflylabz.taptap"
         minSdk = 24
         targetSdk = 37
         versionCode = 1

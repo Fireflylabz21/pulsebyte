@@ -1,5 +1,5 @@
 """
-PulseAI Automated News Ingestion & Multi-LLM Synthesis Worker (Python Edition)
+TapTap Automated News Ingestion & Multi-LLM Synthesis Worker (Python Edition)
 Fetches live RSS news feeds across 12 topics, resolves destination article URLs,
 synthesizes via Gemini 3.5 Flash Lite (with alternate Gemini & Grok fallbacks),
 runs tightened editorial safety guardrails (NSFW/CSAM filtering, anti-misinformation/misquoting, strict duplicate prevention),
@@ -31,12 +31,12 @@ if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
 NEWS_SYNTHESIS_PROMPT = """
-You are an objective news editor. You are provided with raw news articles or RSS text covering a recent event.
+You are an objective financial and general news editor. You are provided with raw news articles or RSS text covering a recent event.
 
 TIGHTENED EDITORIAL & SAFETY GUARDRAILS:
 1. STRICT SAFETY & NSFW / CSAM FILTER: Strictly reject and omit any news, topics, or text related to pornography, explicit adult content, child sexual abuse material (CSAM), non-consensual sexual content, human trafficking, or graphic violence. If raw text contains prohibited or unsafe content, output an error or neutral empty state.
 2. FACTUALITY & ANTI-MISINFORMATION: Strictly prohibit speculation, fabrication, hallucination, or misquoting. Every bullet point must be 100% grounded in verified factual claims present in the provided source text.
-3. OBJECTIVE TITLE: Formulate a concise, clickbait-free objective title (Max 12 words) capturing the core event accurately without sensationalism.
+3. OBJECTIVE TITLE: Formulate a concise, clickbait-free objective title (Max 12 words) capturing the core event accurately without sensationalism. For business/finance/IPO/market stories, explicitly highlight key metrics (e.g., Sensex, Nifty, IPO issue size, RBI repo rate, or sector impact).
 4. EXACTLY 4 BULLETS: Generate EXACTLY 4 key bullet points synthesized strictly from factual claims across the provided text.
 5. TOPICS: Categorize into EXACTLY ONE of the following 12 topics:
    - Politics
@@ -51,7 +51,7 @@ TIGHTENED EDITORIAL & SAFETY GUARDRAILS:
    - Cricket
    - Enterprise AI
    - India
-6. SOURCE AGENCY: Identify the primary news agency or publication name covering this (e.g. BBC, India Today, Yahoo, NYTimes, Reuters, Bloomberg, TechCrunch).
+6. SOURCE AGENCY: Identify the primary news agency or publication name covering this (e.g. BBC, India Today, Yahoo, NYTimes, Reuters, Bloomberg, Mint, Economic Times).
 7. BREAKING & READING TIME: Determine if breaking (true/false) and estimate reading time in minutes (1 or 2).
 8. BIAS LABEL: Determine bias label ('LEFT', 'CENTER', or 'RIGHT').
 
@@ -65,7 +65,7 @@ OUTPUT FORMAT (JSON ONLY):
     "Fact-based point 3",
     "Fact-based point 4"
   ],
-  "source_agency": "BBC",
+  "source_agency": "Mint",
   "is_breaking": false,
   "reading_time_minutes": 2,
   "bias_label": "CENTER"
@@ -231,7 +231,6 @@ def synthesize_news_with_llm_fallback(raw_text, expected_topic=None):
     if contains_prohibited_content(raw_text):
         raise ValueError("Rejected due to prohibited safety/NSFW content keywords.")
 
-    # 1. Try Primary Gemini API Key
     if GEMINI_API_KEY:
         try:
             print(f"Attempting AI synthesis for '{expected_topic}' with Primary Gemini API Key...")
@@ -243,7 +242,6 @@ def synthesize_news_with_llm_fallback(raw_text, expected_topic=None):
         except Exception as e:
             print(f"Primary Gemini key failed: {e}")
 
-    # 2. Try Alternate / Fallback Gemini API Key
     if GEMINI_API_KEY_FALLBACK:
         try:
             print(f"Attempting AI synthesis for '{expected_topic}' with Alternate Gemini API Key...")
@@ -255,7 +253,6 @@ def synthesize_news_with_llm_fallback(raw_text, expected_topic=None):
         except Exception as e:
             print(f"Alternate Gemini key failed: {e}")
 
-    # 3. Try Grok (xAI) Fallback Key
     if GROK_API_KEY:
         try:
             print(f"Attempting AI synthesis for '{expected_topic}' with Grok (xAI) Fallback Key...")
@@ -290,9 +287,8 @@ def get_or_create_news_source(url):
     return None
 
 def run_ingestion_pipeline():
-    print("Starting PulseAI Multi-Topic Live RSS Ingestion & Synthesis Pipeline (12 Topics) with Tightened Guardrails...")
+    print("Starting TapTap Multi-Topic Live RSS Ingestion & Synthesis Pipeline (12 Topics covering Business, IPOs, Sensex/Nifty, India, & Tech)...")
 
-    # Fetch existing article URLs and cluster titles from Supabase for strict deduplication
     existing_articles = supabase.table("raw_articles").select("url").execute()
     existing_urls = {row["url"] for row in existing_articles.data} if existing_articles.data else set()
 
@@ -306,7 +302,7 @@ def run_ingestion_pipeline():
         "Crime": ["https://news.google.com/rss/search?q=Crime+Public+Safety&hl=en-US&gl=US&ceid=US:en"],
         "Business": [
             "https://feeds.bbci.co.uk/news/business/rss.xml",
-            "https://news.google.com/rss/search?q=Business+Finance&hl=en-US&gl=US&ceid=US:en"
+            "https://news.google.com/rss/search?q=Business+Finance+IPO+Sensex+Nifty&hl=en-IN&gl=IN&ceid=IN:en"
         ],
         "Entertainment": ["https://news.google.com/rss/search?q=Entertainment+Celebrity+Culture&hl=en-US&gl=US&ceid=US:en"],
         "Sports": ["https://news.google.com/rss/search?q=Sports&hl=en-US&gl=US&ceid=US:en"],
@@ -322,7 +318,7 @@ def run_ingestion_pipeline():
             "https://news.google.com/rss/search?q=Enterprise+AI+Generative+AI&hl=en-US&gl=US&ceid=US:en"
         ],
         "India": [
-            "https://news.google.com/rss/search?q=India+News&hl=en-IN&gl=IN&ceid=IN:en",
+            "https://news.google.com/rss/search?q=India+Economy+Markets+IPO&hl=en-IN&gl=IN&ceid=IN:en",
             "https://feeds.feedburner.com/ndtvnews-top-stories"
         ]
     }
@@ -366,13 +362,12 @@ def run_ingestion_pipeline():
             synthesized_cluster = synthesize_news_with_llm_fallback(raw_text, expected_topic=topic)
             objective_title = synthesized_cluster.get("objective_title", "")
 
-            # Strict Duplicate Prevention Check
             if is_duplicate_cluster(objective_title, existing_titles):
                 print(f"[{topic}] Duplicate story detected ('{objective_title}'). Skipping.")
                 continue
 
             primary_source_url = batch[0]["link"] if batch else "https://news.google.com"
-            source_agency_name = synthesized_cluster.get("source_agency", "BBC • Reuters")
+            source_agency_name = synthesized_cluster.get("source_agency", "Economic Times • Mint")
 
             cluster_payload = {
                 "objective_title": objective_title,
@@ -412,7 +407,7 @@ def run_ingestion_pipeline():
         except Exception as e:
             print(f"[{topic}] Failed to synthesize cluster: {e}")
 
-    print(f"Pipeline Execution Complete! Generated {total_clusters_generated} new story clusters and stored {total_articles_inserted} source articles across 12 topics.")
+    print(f"Pipeline Execution Complete! Generated {total_clusters_generated} new story clusters and stored {total_articles_inserted} source articles across all 12 categories including Financial/IPO intelligence.")
 
 if __name__ == "__main__":
     run_ingestion_pipeline()
