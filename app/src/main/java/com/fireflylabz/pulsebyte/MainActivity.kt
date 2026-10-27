@@ -14,6 +14,8 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
 import com.fireflylabz.pulsebyte.ui.feed.HomeFeedViewModel
+import com.fireflylabz.pulsebyte.ui.finance.FinanceHubScreen
+import com.fireflylabz.pulsebyte.ui.finance.FinanceViewModel
 import com.fireflylabz.pulsebyte.ui.flashcard.StoryFlashcardScreen
 import com.fireflylabz.pulsebyte.ui.flashcard.StoryFlashcardViewModel
 import com.fireflylabz.pulsebyte.ui.screens.AboutScreen
@@ -28,6 +30,7 @@ import java.nio.charset.StandardCharsets
 class MainActivity : ComponentActivity() {
 
     private val homeFeedViewModel: HomeFeedViewModel by viewModels()
+    private val financeViewModel: FinanceViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -57,7 +60,16 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onAboutClick = {
                                     navController.navigate("about")
+                                },
+                                onFinanceClick = {
+                                    navController.navigate("finance_hub")
                                 }
+                            )
+                        }
+                        composable("finance_hub") {
+                            FinanceHubScreen(
+                                viewModel = financeViewModel,
+                                onBackClick = { navController.popBackStack() }
                             )
                         }
                         composable("bookmarks") {

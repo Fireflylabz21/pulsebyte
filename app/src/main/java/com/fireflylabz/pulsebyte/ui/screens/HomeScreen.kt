@@ -1,6 +1,8 @@
 package com.fireflylabz.pulsebyte.ui.screens
 
 import android.speech.tts.TextToSpeech
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -10,6 +12,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -26,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import com.fireflylabz.pulsebyte.ui.feed.HomeFeedUiState
 import com.fireflylabz.pulsebyte.ui.feed.HomeFeedViewModel
 import com.fireflylabz.pulsebyte.ui.flashcard.CATEGORIES_LIST
+import kotlinx.coroutines.delay
 import java.util.Locale
 
 private data class CategoryTileStyle(
@@ -56,7 +60,8 @@ fun HomeScreen(
     viewModel: HomeFeedViewModel,
     onCategoryClick: (String) -> Unit,
     onBookmarksClick: () -> Unit,
-    onAboutClick: () -> Unit
+    onAboutClick: () -> Unit,
+    onFinanceClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -88,6 +93,20 @@ fun HomeScreen(
                 categoryCounts.entries.firstOrNull { it.key.equals(cat, ignoreCase = true) }?.value ?: 0
             }
     }
+
+    val top10Stories = remember(clusters) { clusters.take(10) }
+    var bannerIndex by remember { mutableStateOf(0) }
+
+    if (top10Stories.isNotEmpty()) {
+        LaunchedEffect(top10Stories) {
+            while (true) {
+                delay(4500L)
+                bannerIndex = (bannerIndex + 1) % top10Stories.size
+            }
+        }
+    }
+
+    val activeBannerStory = top10Stories.getOrNull(bannerIndex)
 
     Scaffold(
         topBar = {
@@ -123,6 +142,21 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        // Finance Hub Button
+                        IconButton(
+                            onClick = onFinanceClick,
+                            modifier = Modifier
+                                .size(40.dp)
+                                .background(Color(0xFF18181B), CircleShape)
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.TrendingUp,
+                                contentDescription = "Finance Hub",
+                                tint = Color(0xFF34D399),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+
                         // Audio Briefing Button
                         IconButton(
                             onClick = {
@@ -130,7 +164,7 @@ fun HomeScreen(
                                     tts?.stop()
                                     isPlayingAudio = false
                                 } else {
-                                    val topStory = clusters.firstOrNull()
+                                    val topStory = activeBannerStory ?: clusters.firstOrNull()
                                     val briefingText = if (topStory != null) {
                                         "TapTap Daily Audio Briefing. Top story: ${topStory.displayTitle}. Key points: ${topStory.displayBullets.joinToString(". ")}"
                                     } else {
@@ -180,7 +214,7 @@ fun HomeScreen(
         ) {
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Featured Top 10 News of the Day Banner Card
+            // Featured Top 10 News of the Day Banner Card (Rotating through Top 10 Stories)
             Card(
                 shape = RoundedCornerShape(22.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
@@ -209,7 +243,7 @@ fun HomeScreen(
                             shape = RoundedCornerShape(8.dp)
                         ) {
                             Text(
-                                text = "🔥 TOP 10 NEWS OF THE DAY",
+                                text = "🔥 TOP 10 NEWS OF THE DAY (${bannerIndex + 1}/10)",
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     fontWeight = FontWeight.Bold,
                                     letterSpacing = 0.8.sp
@@ -219,22 +253,32 @@ fun HomeScreen(
                             )
                         }
 
-                        Column {
-                            Text(
-                                text = "Earth's Climate Crosses Key Tipping Point, Warn Scientists",
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp,
-                                    lineHeight = 24.sp
-                                ),
-                                color = Color.White
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "3 min read • Updated 5 PM",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFFE2E8F0)
-                            )
+                        AnimatedContent(
+                            targetState = activeBannerStory,
+                            transitionSpec = {
+                                (fadeIn(animationSpec = tween(500)) + slideInVertically(animationSpec = tween(500)) { height -> height / 2 })
+                                    .togetherWith(fadeOut(animationSpec = tween(500)) + slideOutVertically(animationSpec = tween(500)) { height -> -height / 2 })
+                            },
+                            label = "BannerStoryRotation"
+                        ) { story ->
+                            Column {
+                                Text(
+                                    text = story?.displayTitle ?: "Earth's Climate Crosses Key Tipping Point, Warn Scientists",
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 18.sp,
+                                        lineHeight = 24.sp
+                                    ),
+                                    color = Color.White,
+                                    maxLines = 2
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "${story?.displayCategory ?: "General"} • Tap to Explore",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color(0xFFE2E8F0)
+                                )
+                            }
                         }
                     }
                 }
