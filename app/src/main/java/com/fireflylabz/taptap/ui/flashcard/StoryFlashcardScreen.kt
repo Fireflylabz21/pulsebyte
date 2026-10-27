@@ -4,12 +4,15 @@ import android.content.Context
 import android.speech.tts.TextToSpeech
 import android.view.HapticFeedbackConstants
 import androidx.core.content.edit
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.res.painterResource
+import com.fireflylabz.taptap.R
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
@@ -210,7 +213,10 @@ fun StoryFlashcardScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         IconButton(
                             onClick = onBackClick,
                             modifier = Modifier.size(40.dp)
@@ -222,7 +228,11 @@ fun StoryFlashcardScreen(
                                 modifier = Modifier.size(24.dp)
                             )
                         }
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Image(
+                            painter = painterResource(R.drawable.app_logo),
+                            contentDescription = "TapTap Logo",
+                            modifier = Modifier.size(32.dp)
+                        )
                         Text(
                             text = "TapTap",
                             style = MaterialTheme.typography.titleLarge.copy(

@@ -13,6 +13,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import com.fireflylabz.taptap.R
 import com.fireflylabz.taptap.ui.components.NewsClusterCard
 import com.fireflylabz.taptap.ui.feed.HomeFeedUiState
 import com.fireflylabz.taptap.ui.feed.HomeFeedViewModel
@@ -31,7 +34,19 @@ fun BookmarksScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Saved Stories", fontWeight = FontWeight.Bold) },
+                title = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Image(
+                            painter = painterResource(R.drawable.app_logo),
+                            contentDescription = "TapTap Logo",
+                            modifier = Modifier.size(28.dp)
+                        )
+                        Text("Saved Stories", fontWeight = FontWeight.Bold)
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")

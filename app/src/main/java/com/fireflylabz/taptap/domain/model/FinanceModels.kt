@@ -19,6 +19,17 @@ data class MarketIndex(
 )
 
 @Serializable
+data class StockMover(
+    val symbol: String,
+    val companyName: String,
+    val currentPrice: Double,
+    val changePct: Double,
+    val volume: String,
+    val isGainer: Boolean,
+    val timeFrame: String // "Day" or "Week"
+)
+
+@Serializable
 data class StockScreenerItem(
     val rank: Int,
     val symbol: String,

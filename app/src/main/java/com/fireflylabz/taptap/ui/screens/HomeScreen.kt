@@ -3,6 +3,7 @@ package com.fireflylabz.taptap.ui.screens
 import android.speech.tts.TextToSpeech
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -23,9 +24,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.fireflylabz.taptap.R
 import com.fireflylabz.taptap.domain.model.MarketIndex
 import com.fireflylabz.taptap.ui.feed.HomeFeedUiState
 import com.fireflylabz.taptap.ui.feed.HomeFeedViewModel
@@ -68,8 +71,8 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val indices by financeViewModel.indices.collectAsState()
-    val sensex = indices.firstOrNull { it.symbol == "BSE:SENSEX" }
-    val nifty = indices.firstOrNull { it.symbol == "NSE:NIFTY50" }
+    val sensex = indices.firstOrNull { it.symbol == "^BSESN" || it.symbol.contains("SENSEX", ignoreCase = true) }
+    val nifty = indices.firstOrNull { it.symbol == "^NSEI" || it.symbol.contains("NIFTY", ignoreCase = true) }
     val context = LocalContext.current
     var tts by remember { mutableStateOf<TextToSpeech?>(null) }
     var isPlayingAudio by remember { mutableStateOf(false) }
@@ -128,27 +131,37 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
-                        Text(
-                            text = "TapTap",
-                            style = MaterialTheme.typography.headlineMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 28.sp
-                            ),
-                            color = Color.White
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Image(
+                            painter = painterResource(R.drawable.app_logo),
+                            contentDescription = "TapTap Logo",
+                            modifier = Modifier.size(36.dp)
                         )
-                        Text(
-                            text = "News that fits your day",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color(0xFFA1A1AA)
-                        )
+                        Column {
+                            Text(
+                                text = "TapTap",
+                                style = MaterialTheme.typography.headlineMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 28.sp
+                                ),
+                                color = Color.White
+                            )
+                            Text(
+                                text = "News that fits your day",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFFA1A1AA)
+                            )
+                        }
                     }
 
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Finance Hub Button
+                        // BusinessHub Button
                         IconButton(
                             onClick = onFinanceClick,
                             modifier = Modifier
@@ -157,7 +170,7 @@ fun HomeScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.TrendingUp,
-                                contentDescription = "Finance Hub",
+                                contentDescription = "BusinessHub",
                                 tint = Color(0xFF34D399),
                                 modifier = Modifier.size(20.dp)
                             )

@@ -65,6 +65,8 @@ dependencies {
     implementation(libs.supabase.auth)
     implementation(libs.supabase.realtime)
     implementation(libs.ktor.client.android)
+    implementation("io.ktor:ktor-client-content-negotiation:3.0.0")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:3.0.0")
     implementation(libs.kotlinx.serialization.json)
 
     testImplementation(libs.junit)

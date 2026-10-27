@@ -21,6 +21,7 @@ import com.fireflylabz.taptap.ui.flashcard.StoryFlashcardViewModel
 import com.fireflylabz.taptap.ui.screens.AboutScreen
 import com.fireflylabz.taptap.ui.screens.BookmarksScreen
 import com.fireflylabz.taptap.ui.screens.HomeScreen
+import com.fireflylabz.taptap.ui.screens.SplashScreen
 import com.fireflylabz.taptap.ui.screens.WebReaderScreen
 import com.fireflylabz.taptap.ui.theme.TapTapTheme
 import java.net.URLDecoder
@@ -45,9 +46,18 @@ class MainActivity : ComponentActivity() {
                 ) { innerPadding ->
                     NavHost(
                         navController = navController,
-                        startDestination = "home",
+                        startDestination = "splash",
                         modifier = Modifier.padding(innerPadding)
                     ) {
+                        composable("splash") {
+                            SplashScreen(
+                                onSplashFinished = {
+                                    navController.navigate("home") {
+                                        popUpTo("splash") { inclusive = true }
+                                    }
+                                }
+                            )
+                        }
                         composable("home") {
                             HomeScreen(
                                 viewModel = homeFeedViewModel,
@@ -70,7 +80,8 @@ class MainActivity : ComponentActivity() {
                         composable("finance_hub") {
                             FinanceHubScreen(
                                 viewModel = financeViewModel,
-                                onBackClick = { navController.popBackStack() }
+                                onBackClick = { navController.popBackStack() },
+                                onAboutClick = { navController.navigate("about") }
                             )
                         }
                         composable("bookmarks") {

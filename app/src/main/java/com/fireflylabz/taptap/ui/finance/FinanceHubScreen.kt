@@ -1,5 +1,6 @@
 package com.fireflylabz.taptap.ui.finance
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -13,29 +14,78 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.fireflylabz.taptap.R
 import com.fireflylabz.taptap.domain.model.*
+
+private data class IndexCardTheme(
+    val gradientColors: List<Color>,
+    val badgeColor: Color,
+    val textColor: Color
+)
+
+private fun getIndexCardTheme(symbol: String): IndexCardTheme {
+    val norm = symbol.uppercase()
+    return when {
+        norm.contains("SENSEX") || norm.contains("BSESN") -> IndexCardTheme(
+            gradientColors = listOf(Color(0xFF1E1B4B), Color(0xFF312E81)),
+            badgeColor = Color(0xFF818CF8),
+            textColor = Color.White
+        )
+        norm.contains("NIFTY") || norm.contains("NSEI") -> IndexCardTheme(
+            gradientColors = listOf(Color(0xFF064E3B), Color(0xFF065F46)),
+            badgeColor = Color(0xFF34D399),
+            textColor = Color.White
+        )
+        norm.contains("GSPC") || norm.contains("S&P") -> IndexCardTheme(
+            gradientColors = listOf(Color(0xFF1B1B3A), Color(0xFF2E2E5C)),
+            badgeColor = Color(0xFFF472B6),
+            textColor = Color.White
+        )
+        norm.contains("IXIC") || norm.contains("NASDAQ") -> IndexCardTheme(
+            gradientColors = listOf(Color(0xFF0C4A6E), Color(0xFF075985)),
+            badgeColor = Color(0xFF38BDF8),
+            textColor = Color.White
+        )
+        norm.contains("FTSE") -> IndexCardTheme(
+            gradientColors = listOf(Color(0xFF451A03), Color(0xFF78350F)),
+            badgeColor = Color(0xFFFBBF24),
+            textColor = Color.White
+        )
+        norm.contains("N225") || norm.contains("NIKKEI") -> IndexCardTheme(
+            gradientColors = listOf(Color(0xFF4C0519), Color(0xFF881337)),
+            badgeColor = Color(0xFFFB7185),
+            textColor = Color.White
+        )
+        else -> IndexCardTheme(
+            gradientColors = listOf(Color(0xFF18181B), Color(0xFF27272A)),
+            badgeColor = Color(0xFF38BDF8),
+            textColor = Color.White
+        )
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FinanceHubScreen(
     viewModel: FinanceViewModel,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onAboutClick: () -> Unit
 ) {
     val indices by viewModel.indices.collectAsState()
-    val stockScreener by viewModel.stockScreener.collectAsState()
-    val mutualFunds by viewModel.mutualFunds.collectAsState()
+    val gainersLosers by viewModel.gainersLosers.collectAsState()
     val macroIndicators by viewModel.macroIndicators.collectAsState()
     val commodities by viewModel.commodities.collectAsState()
     val macroCorrelations by viewModel.macroCorrelations.collectAsState()
-    val marketAlerts by viewModel.marketAlerts.collectAsState()
-    val ipoNews by viewModel.ipoNews.collectAsState()
 
-    var selectedTab by remember { mutableStateOf(0) }
-    val tabs = listOf("Indices & Markets", "IPO News", "Screeners & Funds", "Macro & Commodities", "Correlations & Heatmap", "Smart Alerts")
+    var selectedTab by remember { mutableIntStateOf(0) }
+    val tabs = listOf("Indices & Markets", "Gainers & Losers", "Macro & Commodities", "Insights")
 
     Scaffold(
         topBar = {
@@ -67,9 +117,14 @@ fun FinanceHubScreen(
                                 modifier = Modifier.size(20.dp)
                             )
                         }
+                        Image(
+                            painter = painterResource(R.drawable.app_logo),
+                            contentDescription = "TapTap Logo",
+                            modifier = Modifier.size(32.dp)
+                        )
                         Column {
                             Text(
-                                text = "Financial Hub",
+                                text = "BusinessHub",
                                 style = MaterialTheme.typography.headlineMedium.copy(
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 24.sp
@@ -82,6 +137,20 @@ fun FinanceHubScreen(
                                 color = Color(0xFFA1A1AA)
                             )
                         }
+                    }
+
+                    IconButton(
+                        onClick = onAboutClick,
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(Color(0xFF18181B), CircleShape)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = "About / Info",
+                            tint = Color(0xFF38BDF8),
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 }
             }
@@ -118,11 +187,9 @@ fun FinanceHubScreen(
 
             when (selectedTab) {
                 0 -> IndicesMarketsTab(indices)
-                1 -> IpoNewsTab(ipoNews)
-                2 -> ScreenersFundsTab(stockScreener, mutualFunds)
-                3 -> MacroCommoditiesTab(macroIndicators, commodities)
-                4 -> CorrelationsHeatmapTab(macroCorrelations)
-                5 -> SmartAlertsTab(marketAlerts)
+                1 -> GainersLosersTab(gainersLosers)
+                2 -> MacroCommoditiesTab(macroIndicators, commodities)
+                3 -> InsightsTab(macroCorrelations)
             }
         }
     }
@@ -137,277 +204,230 @@ fun IndicesMarketsTab(indices: List<MarketIndex>) {
     ) {
         items(indices) { index ->
             val isPositive = index.changePct >= 0
+            val cardTheme = getIndexCardTheme(index.symbol)
+
             Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF18181B)),
+                shape = RoundedCornerShape(20.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                text = index.name,
-                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                color = Color.White
-                            )
-                            Text(
-                                text = "${index.exchange} • Symbol: ${index.symbol}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFFA1A1AA)
-                            )
-                        }
-                        Column(horizontalAlignment = Alignment.End) {
-                            Text(
-                                text = "%,.2f".format(index.price),
-                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                color = Color.White
-                            )
-                            Surface(
-                                color = if (isPositive) Color(0xFF065F46) else Color(0xFF7F1D1D),
-                                shape = RoundedCornerShape(6.dp)
-                            ) {
-                                Text(
-                                    text = "${if (isPositive) "+" else ""}${index.changePct}%",
-                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                                    color = if (isPositive) Color(0xFF34D399) else Color(0xFFF87171),
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-                    HorizontalDivider(color = Color(0xFF27272A))
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        MetricCell("Open", "%,.2f".format(index.open))
-                        MetricCell("High", "%,.2f".format(index.high))
-                        MetricCell("Low", "%,.2f".format(index.low))
-                        MetricCell("RSI (14)", "%.1f".format(index.rsi14))
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        MetricCell("SMA 50", "%,.2f".format(index.sma50))
-                        MetricCell("SMA 200", "%,.2f".format(index.sma200))
-                        MetricCell("Volume", "%,d".format(index.volume))
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun IpoNewsTab(ipoList: List<IpoNewsItem>) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        contentPadding = PaddingValues(vertical = 12.dp)
-    ) {
-        if (ipoList.isEmpty()) {
-            item {
-                Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-                    Text(text = "No active IPO offerings found in DB.", color = Color(0xFFA1A1AA))
-                }
-            }
-        }
-
-        items(ipoList) { ipo ->
-            val isOpen = ipo.status.equals("Open", ignoreCase = true)
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF18181B)),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = ipo.companyName,
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                            color = Color.White
-                        )
-                        Surface(
-                            color = if (isOpen) Color(0xFF065F46) else Color(0xFF1E293B),
-                            shape = RoundedCornerShape(6.dp)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Brush.linearGradient(cardTheme.gradientColors))
+                        .padding(18.dp)
+                ) {
+                    Column {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = ipo.status.uppercase(),
-                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                                color = if (isOpen) Color(0xFF34D399) else Color(0xFF38BDF8),
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = ipo.description,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFFA1A1AA)
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-                    HorizontalDivider(color = Color(0xFF27272A))
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        MetricCell("Issue Size", ipo.issueSize)
-                        MetricCell("Price Band", ipo.priceBand)
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        MetricCell("Opening", ipo.openingDate)
-                        MetricCell("Closing", ipo.closingDate)
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun ScreenersFundsTab(stocks: List<StockScreenerItem>, funds: List<MutualFundItem>) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        contentPadding = PaddingValues(vertical = 12.dp)
-    ) {
-        if (stocks.isEmpty()) {
-            item {
-                Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-                    Text(text = "Synchronizing stocks from DB...", color = Color(0xFFA1A1AA))
-                }
-            }
-        }
-
-        items(stocks) { stock ->
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF18181B)),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Surface(
-                                color = Color(0xFF3B82F6),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Text(
-                                    text = "#${stock.rank}",
-                                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                                    color = Color.White,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(12.dp))
                             Column {
                                 Text(
-                                    text = stock.name,
-                                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                                    color = Color.White
+                                    text = index.name,
+                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, fontSize = 18.sp),
+                                    color = cardTheme.textColor
                                 )
                                 Text(
-                                    text = "${stock.marketCapCategory} • ${stock.symbol}",
+                                    text = "${index.exchange} • ${index.symbol}",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = Color(0xFFA1A1AA)
+                                    color = Color.White.copy(alpha = 0.7f)
                                 )
                             }
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text(
+                                    text = "%,.2f".format(index.price),
+                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, fontSize = 18.sp),
+                                    color = cardTheme.textColor
+                                )
+                                Surface(
+                                    color = if (isPositive) Color(0xFF065F46) else Color(0xFF7F1D1D),
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Text(
+                                        text = "${if (isPositive) "+" else ""}${index.changePct}%",
+                                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                        color = if (isPositive) Color(0xFF34D399) else Color(0xFFF87171),
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                    )
+                                }
+                            }
                         }
-                        Column(horizontalAlignment = Alignment.End) {
-                            Text(
-                                text = "+${stock.monthlyReturnPct}%",
-                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                color = Color(0xFF34D399)
-                            )
-                            Text(
-                                text = "Sharpe: ${stock.sharpeRatio}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFFA1A1AA)
-                            )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+                        HorizontalDivider(color = Color.White.copy(alpha = 0.15f))
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            MetricCell("Open", "%,.2f".format(index.open))
+                            MetricCell("High", "%,.2f".format(index.high))
+                            MetricCell("Low", "%,.2f".format(index.low))
+                            MetricCell("RSI (14)", "%.1f".format(index.rsi14))
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            MetricCell("SMA 50", "%,.2f".format(index.sma50))
+                            MetricCell("SMA 200", "%,.2f".format(index.sma200))
+                            MetricCell("Volume", "%,d".format(index.volume))
                         }
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Volume Spike Factor: ${stock.volumeSpikeFactor}x normal volume",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF38BDF8)
-                    )
                 }
             }
         }
+    }
+}
 
+@Composable
+fun GainersLosersTab(movers: List<StockMover>) {
+    var selectedTimeframe by remember { mutableStateOf("Day") }
+    val filteredMovers = remember(movers, selectedTimeframe) {
+        movers.filter { it.timeFrame.equals(selectedTimeframe, ignoreCase = true) }
+    }
+
+    val topGainers = remember(filteredMovers) { filteredMovers.filter { it.isGainer } }
+    val topLosers = remember(filteredMovers) { filteredMovers.filter { !it.isGainer } }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(vertical = 12.dp)
+    ) {
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                SingleChoiceSegmentedButtonRow(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    SegmentedButton(
+                        selected = selectedTimeframe == "Day",
+                        onClick = { selectedTimeframe = "Day" },
+                        shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = "Day (1D)",
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            fontSize = 13.sp
+                        )
+                    }
+                    SegmentedButton(
+                        selected = selectedTimeframe == "Week",
+                        onClick = { selectedTimeframe = "Week" },
+                        shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = "Week (1W)",
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            fontSize = 13.sp
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
+        // Section: Top Gainers
+        item {
+            Text(
+                text = "🚀 Top Gainers (${selectedTimeframe})",
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, fontSize = 18.sp),
+                color = Color(0xFF34D399)
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+        }
+
+        items(topGainers) { stock ->
+            StockMoverCard(stock)
+        }
+
+        // Section: Top Losers
         item {
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = "Top Performing Mutual Funds & ETFs",
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                color = Color.White
+                text = "🔻 Top Losers (${selectedTimeframe})",
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, fontSize = 18.sp),
+                color = Color(0xFFF87171)
             )
+            Spacer(modifier = Modifier.height(6.dp))
         }
 
-        items(funds) { fund ->
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF18181B)),
-                modifier = Modifier.fillMaxWidth()
+        items(topLosers) { stock ->
+            StockMoverCard(stock)
+        }
+    }
+}
+
+@Composable
+fun StockMoverCard(stock: StockMover) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF18181B)),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 12.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                text = fund.fundName,
-                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                                color = Color.White
-                            )
-                            Text(
-                                text = "${fund.category} • NAV: ₹${fund.nav}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFFA1A1AA)
-                            )
-                        }
-                        Column(horizontalAlignment = Alignment.End) {
-                            Text(
-                                text = "+${fund.monthlyReturnPct}% (1M)",
-                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                                color = Color(0xFF34D399)
-                            )
-                            Text(
-                                text = "3Y CAGR: ${fund.threeYrCagrPct}%",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFF38BDF8)
-                            )
-                        }
-                    }
+                Text(
+                    text = stock.companyName,
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, fontSize = 15.sp),
+                    color = Color.White,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "${stock.symbol} • Vol: ${stock.volume}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFFA1A1AA),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "₹%,.2f".format(stock.currentPrice),
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, fontSize = 15.sp),
+                    color = Color.White,
+                    maxLines = 1
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Surface(
+                    color = if (stock.isGainer) Color(0xFF065F46) else Color(0xFF7F1D1D),
+                    shape = RoundedCornerShape(6.dp)
+                ) {
+                    Text(
+                        text = "${if (stock.isGainer) "+" else ""}${stock.changePct}%",
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 11.sp),
+                        color = if (stock.isGainer) Color(0xFF34D399) else Color(0xFFF87171),
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        maxLines = 1
+                    )
                 }
             }
         }
@@ -418,44 +438,109 @@ fun ScreenersFundsTab(stocks: List<StockScreenerItem>, funds: List<MutualFundIte
 fun MacroCommoditiesTab(macros: List<MacroIndicator>, commodities: List<CommodityItem>) {
     LazyColumn(
         modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
         contentPadding = PaddingValues(vertical = 12.dp)
     ) {
+        item {
+            Text(
+                text = "Macro Economic Indicators",
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, fontSize = 18.sp),
+                color = Color.White
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+        }
+
         items(macros) { macro ->
             Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF18181B)),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp)
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
                             text = macro.title,
-                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                            color = Color.White
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp
+                            ),
+                            color = Color.White,
+                            modifier = Modifier.weight(1f)
                         )
-                        Text(
-                            text = macro.changeNote,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color(0xFF38BDF8)
-                        )
+                        Surface(
+                            color = Color(0xFF334155),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text(
+                                text = macro.category.uppercase(),
+                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                color = Color(0xFF38BDF8),
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
                     }
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text(
-                            text = macro.value,
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                            color = Color.White
-                        )
-                        Text(
-                            text = "Prev: ${macro.previousValue}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color(0xFFA1A1AA)
-                        )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Bottom
+                    ) {
+                        Column {
+                            Text(
+                                text = "Current Value",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFFA1A1AA)
+                            )
+                            Text(
+                                text = macro.value,
+                                style = MaterialTheme.typography.headlineSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 24.sp
+                                ),
+                                color = Color(0xFF38BDF8)
+                            )
+                        }
+
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text(
+                                text = "Previous",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFFA1A1AA)
+                            )
+                            Text(
+                                text = macro.previousValue,
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 17.sp
+                                ),
+                                color = Color.White
+                            )
+                        }
                     }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+                    HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Text(
+                        text = macro.changeNote,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontSize = 14.sp,
+                            lineHeight = 18.sp
+                        ),
+                        color = Color(0xFF93C5FD)
+                    )
                 }
             }
         }
@@ -464,77 +549,42 @@ fun MacroCommoditiesTab(macros: List<MacroIndicator>, commodities: List<Commodit
             Spacer(modifier = Modifier.height(12.dp))
             Text(
                 text = "Commodities Watch & Pricing",
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, fontSize = 18.sp),
                 color = Color.White
             )
+            Spacer(modifier = Modifier.height(4.dp))
         }
 
         items(commodities) { comm ->
             val isPositive = comm.changePct >= 0
             Card(
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF18181B)),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF271C10)),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = comm.name,
-                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, fontSize = 16.sp),
                             color = Color.White
                         )
                         Text(
                             text = "${comm.category} • Unit: ${comm.unit}",
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color(0xFFA1A1AA)
+                            color = Color(0xFFFBBF24)
                         )
                     }
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
                             text = "%,.2f".format(comm.price),
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                            color = Color.White
-                        )
-                        Text(
-                            text = "${if (isPositive) "+" else ""}${comm.changePct}%",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = if (isPositive) Color(0xFF34D399) else Color(0xFFF87171)
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-// Feature 4 Tab: Correlations & Sector Heatmap
-@Composable
-fun CorrelationsHeatmapTab(correlations: List<MacroCorrelationItem>) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        contentPadding = PaddingValues(vertical = 12.dp)
-    ) {
-        items(correlations) { item ->
-            val isPositive = item.impactType.equals("Positive", ignoreCase = true)
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF18181B)),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = item.triggerEvent,
-                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, fontSize = 17.sp),
                             color = Color.White
                         )
                         Surface(
@@ -542,94 +592,102 @@ fun CorrelationsHeatmapTab(correlations: List<MacroCorrelationItem>) {
                             shape = RoundedCornerShape(6.dp)
                         ) {
                             Text(
-                                text = "${item.impactType} (${item.impactMagnitude})",
+                                text = "${if (isPositive) "+" else ""}${comm.changePct}%",
                                 style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                                 color = if (isPositive) Color(0xFF34D399) else Color(0xFFF87171),
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
                             )
                         }
                     }
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "Affected Sector: ${item.affectedSector}",
-                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                        color = Color(0xFF38BDF8)
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = item.explanation,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFFA1A1AA)
-                    )
                 }
             }
         }
     }
 }
 
-// Feature 5 Tab: Smart Market Alerts
+// Single-line tile list showing full text for Sector Insights
 @Composable
-fun SmartAlertsTab(alerts: List<MarketAlertItem>) {
+fun InsightsTab(correlations: List<MacroCorrelationItem>) {
     LazyColumn(
         modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
-        contentPadding = PaddingValues(vertical = 12.dp)
+        contentPadding = PaddingValues(vertical = 14.dp)
     ) {
-        if (alerts.isEmpty()) {
-            item {
-                Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-                    Text(text = "Synchronizing market alerts from DB...", color = Color(0xFFA1A1AA))
-                }
+        items(correlations) { item ->
+            val isPositive = item.impactType.equals("Positive", ignoreCase = true)
+            
+            val bgGradient = if (isPositive) {
+                listOf(Color(0xFF064E3B), Color(0xFF065F46))
+            } else {
+                listOf(Color(0xFF7F1D1D), Color(0xFF991B1B))
             }
-        }
+            val badgeBg = if (isPositive) Color(0xFF10B981) else Color(0xFFEF4444)
+            val sectorTextColor = if (isPositive) Color(0xFFA7F3D0) else Color(0xFFFCA5A5)
 
-        items(alerts) { alert ->
             Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF18181B)),
+                shape = RoundedCornerShape(18.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Brush.linearGradient(bgGradient))
+                        .padding(18.dp)
+                ) {
+                    Column(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Text(
-                            text = alert.title,
-                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                            color = Color.White
-                        )
-                        Surface(
-                            color = Color(0xFF7F1D1D),
-                            shape = RoundedCornerShape(6.dp)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = alert.severity,
-                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                                color = Color(0xFFF87171),
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                text = item.affectedSector,
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 18.sp
+                                ),
+                                color = sectorTextColor,
+                                modifier = Modifier.weight(1f)
                             )
+                            Surface(
+                                color = badgeBg,
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Text(
+                                    text = "${if (isPositive) "▲ POSITIVE" else "▼ NEGATIVE"} (${item.impactMagnitude.uppercase()})",
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 11.sp
+                                    ),
+                                    color = Color.White,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
                         }
+
+                        Text(
+                            text = item.triggerEvent,
+                            style = MaterialTheme.typography.titleSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                lineHeight = 22.sp
+                            ),
+                            color = Color.White
+                        )
+
+                        Text(
+                            text = item.explanation,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontSize = 14.sp,
+                                lineHeight = 20.sp
+                            ),
+                            color = Color.White.copy(alpha = 0.95f)
+                        )
                     }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = alert.timestamp,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF38BDF8)
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Trigger: ${alert.triggerReason}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFFA1A1AA)
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Action: ${alert.recommendation}",
-                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
-                        color = Color(0xFF34D399)
-                    )
                 }
             }
         }
@@ -639,7 +697,7 @@ fun SmartAlertsTab(alerts: List<MarketAlertItem>) {
 @Composable
 fun MetricCell(label: String, value: String) {
     Column {
-        Text(text = label, style = MaterialTheme.typography.bodySmall, color = Color(0xFFA1A1AA))
+        Text(text = label, style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.7f))
         Text(text = value, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold), color = Color.White)
     }
 }
