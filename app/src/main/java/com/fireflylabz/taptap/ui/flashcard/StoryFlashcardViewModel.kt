@@ -4,11 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fireflylabz.taptap.data.repository.NewsRepositoryImpl
 import com.fireflylabz.taptap.domain.model.NewsCluster
+import com.fireflylabz.taptap.domain.model.matchesCategory
 import com.fireflylabz.taptap.domain.repository.NewsRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 val CATEGORIES_LIST = listOf(
+    "All",
     "Top 10 News",
     "Politics",
     "Crime",
@@ -74,7 +76,7 @@ class StoryFlashcardViewModel(
         } else if (category == "All") {
             clusters
         } else {
-            clusters.filter { it.displayCategory.equals(category, ignoreCase = true) }
+            clusters.filter { matchesCategory(it.displayCategory, category) }
         }
 
         if (categoryStories.isEmpty()) {
@@ -99,8 +101,10 @@ class StoryFlashcardViewModel(
         val category = CATEGORIES_LIST.getOrElse(_categoryIndex.value) { CATEGORIES_LIST[0] }
         return if (category == "Top 10 News") {
             allClusters.take(10)
+        } else if (category == "All") {
+            allClusters
         } else {
-            allClusters.filter { it.displayCategory.equals(category, ignoreCase = true) }
+            allClusters.filter { matchesCategory(it.displayCategory, category) }
         }
     }
 

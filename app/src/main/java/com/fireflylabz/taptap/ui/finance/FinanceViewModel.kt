@@ -15,7 +15,7 @@ import kotlin.random.Random
 
 class FinanceViewModel : ViewModel() {
 
-    private val yahooApiClient = YahooFinanceApiClient()
+    private val yahooApiClient = YahooFinanceApiClient
 
     private val _indices = MutableStateFlow<List<MarketIndex>>(
         listOf(

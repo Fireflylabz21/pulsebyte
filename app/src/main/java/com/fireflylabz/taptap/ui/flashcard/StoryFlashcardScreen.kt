@@ -9,14 +9,19 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.res.painterResource
+import coil.compose.AsyncImage
 import com.fireflylabz.taptap.R
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.*
@@ -159,7 +164,8 @@ private fun getFlashcardColorScheme(category: String): FlashcardColorScheme {
 fun StoryFlashcardScreen(
     viewModel: StoryFlashcardViewModel,
     onBackClick: () -> Unit,
-    onReadOriginalClick: (String) -> Unit
+    onReadOriginalClick: (String) -> Unit,
+    onAboutClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -228,13 +234,13 @@ fun StoryFlashcardScreen(
                                 modifier = Modifier.size(24.dp)
                             )
                         }
-                        Image(
-                            painter = painterResource(R.drawable.app_logo),
-                            contentDescription = "TapTap Logo",
+                        AsyncImage(
+                            model = R.drawable.app_logo,
+                            contentDescription = "PulseZinga Logo",
                             modifier = Modifier.size(32.dp)
                         )
                         Text(
-                            text = "TapTap",
+                            text = "PulseZinga",
                             style = MaterialTheme.typography.titleLarge.copy(
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 20.sp
@@ -244,7 +250,7 @@ fun StoryFlashcardScreen(
                     }
 
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         // Audio Briefing Button
@@ -255,7 +261,7 @@ fun StoryFlashcardScreen(
                                         tts?.stop()
                                         isPlayingAudio = false
                                     } else {
-                                        val text = "Story: ${cluster.displayTitle}. Key points: ${cluster.displayBullets.joinToString(". ")}"
+                                        val text = "PulseZinga Daily Audio Briefing. Story: ${cluster.displayTitle}. Key points: ${cluster.displayBullets.joinToString(". ")}"
                                         tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
                                         isPlayingAudio = true
                                     }
@@ -272,6 +278,21 @@ fun StoryFlashcardScreen(
                                 modifier = Modifier.size(20.dp)
                             )
                         }
+
+                        // Info / About Us Button
+                        IconButton(
+                            onClick = onAboutClick,
+                            modifier = Modifier
+                                .size(40.dp)
+                                .background(Color(0xFF18181B), CircleShape)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Info,
+                                contentDescription = "About Us",
+                                tint = Color(0xFF38BDF8),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -281,7 +302,12 @@ fun StoryFlashcardScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(
+                    top = paddingValues.calculateTopPadding(),
+                    start = paddingValues.calculateLeftPadding(androidx.compose.ui.unit.LayoutDirection.Ltr),
+                    end = paddingValues.calculateRightPadding(androidx.compose.ui.unit.LayoutDirection.Ltr),
+                    bottom = 0.dp
+                )
                 .pointerInput(Unit) {
                     var totalDragX = 0f
                     var totalDragY = 0f
@@ -348,8 +374,8 @@ fun StoryFlashcardScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
-                            verticalArrangement = Arrangement.SpaceBetween
+                                .padding(horizontal = 16.dp, vertical = 4.dp),
+                            verticalArrangement = Arrangement.Center
                         ) {
                             Card(
                                 shape = RoundedCornerShape(24.dp),
@@ -362,14 +388,16 @@ fun StoryFlashcardScreen(
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .background(Brush.linearGradient(scheme.gradientColors))
-                                        .padding(22.dp)
+                                        .padding(20.dp)
                                 ) {
                                     Column(
                                         modifier = Modifier.fillMaxSize(),
                                         verticalArrangement = Arrangement.SpaceBetween
                                     ) {
+                                        // Upper content (Badge, Title, Bullets)
                                         Column(
-                                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                                            modifier = Modifier.weight(1f),
+                                            verticalArrangement = Arrangement.spacedBy(12.dp)
                                         ) {
                                             // Category Badge INSIDE the flashcard tile
                                             Surface(
@@ -393,16 +421,44 @@ fun StoryFlashcardScreen(
                                                 text = activeCluster.displayTitle,
                                                 style = MaterialTheme.typography.headlineSmall.copy(
                                                     fontWeight = FontWeight.Bold,
-                                                    fontSize = 22.sp,
-                                                    lineHeight = 30.sp
+                                                    fontSize = 20.sp,
+                                                    lineHeight = 28.sp
                                                 ),
                                                 color = scheme.titleText
                                             )
 
+                                            // Redesigned Calendar Date Stamp Pill below title
+                                            Surface(
+                                                color = Color.Black.copy(alpha = 0.25f),
+                                                shape = RoundedCornerShape(8.dp)
+                                            ) {
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.CalendarToday,
+                                                        contentDescription = "Publication Date",
+                                                        tint = scheme.bulletDot,
+                                                        modifier = Modifier.size(13.dp)
+                                                    )
+                                                    Text(
+                                                        text = activeCluster.formattedDate,
+                                                        style = MaterialTheme.typography.labelMedium.copy(
+                                                            fontSize = 12.sp,
+                                                            fontWeight = FontWeight.SemiBold,
+                                                            letterSpacing = 0.5.sp
+                                                        ),
+                                                        color = scheme.bulletText
+                                                    )
+                                                }
+                                            }
+
                                             // Bullet points
                                             activeCluster.displayBullets.forEach { bullet ->
                                                 Row(
-                                                    modifier = Modifier.padding(vertical = 4.dp),
+                                                    modifier = Modifier.padding(vertical = 3.dp),
                                                     verticalAlignment = Alignment.Top
                                                 ) {
                                                     Box(
@@ -416,8 +472,8 @@ fun StoryFlashcardScreen(
                                                     Text(
                                                         text = bullet,
                                                         style = MaterialTheme.typography.bodyLarge.copy(
-                                                            fontSize = 15.sp,
-                                                            lineHeight = 22.sp
+                                                            fontSize = 14.sp,
+                                                            lineHeight = 21.sp
                                                         ),
                                                         color = scheme.bulletText
                                                     )
@@ -425,7 +481,9 @@ fun StoryFlashcardScreen(
                                             }
                                         }
 
-                                        // Single-Line Bottom Row: Bookmark Icon + Read More Button (Source removed)
+                                        Spacer(modifier = Modifier.height(10.dp))
+
+                                        // Single-Line Bottom Row: Bookmark Icon + Read More Button
                                         Row(
                                             modifier = Modifier.fillMaxWidth(),
                                             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -438,14 +496,14 @@ fun StoryFlashcardScreen(
                                                     prefs.edit { putBoolean("bookmark_$clusterId", isBookmarked) }
                                                 },
                                                 modifier = Modifier
-                                                    .size(50.dp)
+                                                    .size(48.dp)
                                                     .background(Color.Black.copy(alpha = 0.25f), RoundedCornerShape(16.dp))
                                             ) {
                                                 Icon(
                                                     imageVector = if (isBookmarked) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
                                                     contentDescription = "Bookmark Story",
                                                     tint = Color.White,
-                                                    modifier = Modifier.size(24.dp)
+                                                    modifier = Modifier.size(22.dp)
                                                 )
                                             }
 
@@ -460,13 +518,13 @@ fun StoryFlashcardScreen(
                                                 shape = RoundedCornerShape(16.dp),
                                                 modifier = Modifier
                                                     .weight(1f)
-                                                    .height(50.dp)
+                                                    .height(48.dp)
                                             ) {
                                                 Text(
                                                     text = "Read More →",
                                                     style = MaterialTheme.typography.titleMedium.copy(
                                                         fontWeight = FontWeight.Bold,
-                                                        fontSize = 16.sp
+                                                        fontSize = 15.sp
                                                     ),
                                                     color = scheme.gradientColors.first()
                                                 )

@@ -38,6 +38,24 @@ object SummaryBulletsDeserializer : KSerializer<List<String>> {
     }
 }
 
+fun matchesCategory(clusterCat: String, targetCat: String): Boolean {
+    val c = clusterCat.lowercase().trim()
+    val t = targetCat.lowercase().trim()
+    if (c == t || c.contains(t) || t.contains(c)) return true
+
+    return when {
+        t.contains("health") && (c.contains("health") || c.contains("wellness")) -> true
+        t.contains("lifestyle") && (c.contains("lifestyle") || c.contains("consumer")) -> true
+        t.contains("science") && (c.contains("science") || c.contains("tech")) -> true
+        t.contains("business") && (c.contains("business") || c.contains("finance") || c.contains("economy")) -> true
+        t.contains("politics") && (c.contains("politics") || c.contains("government")) -> true
+        t.contains("crime") && (c.contains("crime") || c.contains("safety")) -> true
+        t.contains("weather") && (c.contains("weather") || c.contains("disaster")) -> true
+        t.contains("entertainment") && (c.contains("entertainment") || c.contains("celebrity")) -> true
+        else -> false
+    }
+}
+
 @Serializable
 data class NewsCluster(
     @SerialName("id") val id: String = "",
@@ -70,4 +88,26 @@ data class NewsCluster(
     val publishedTimeAgo: String get() = "Just now"
     val sourcesCount: Int get() = 3
     val imageUrl: String? get() = null
+
+    val formattedDate: String
+        get() {
+            val dateStr = createdAtField ?: return "Today"
+            return try {
+                if (dateStr.length >= 10) {
+                    val parts = dateStr.substring(0, 10).split("-")
+                    if (parts.size == 3) {
+                        val monthNum = parts[1].toIntOrNull() ?: 1
+                        val dayNum = parts[2].toIntOrNull() ?: 1
+                        val months = arrayOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+                        val monthName = months.getOrElse(monthNum - 1) { "Jan" }
+                        val dayFormatted = String.format(java.util.Locale.US, "%02d", dayNum)
+                        "$monthName-$dayFormatted"
+                    } else {
+                        dateStr.substring(0, 10)
+                    }
+                } else dateStr
+            } catch (e: Exception) {
+                "Today"
+            }
+        }
 }

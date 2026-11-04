@@ -1,16 +1,21 @@
 package com.fireflylabz.taptap.ui.components
 
+import android.content.Context
+import androidx.core.content.edit
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -148,6 +153,13 @@ fun NewsClusterCard(
     val titleStr = cluster.displayTitle
     val bullets = cluster.displayBullets
 
+    val context = LocalContext.current
+    val prefs = remember { context.getSharedPreferences("pulse_prefs", Context.MODE_PRIVATE) }
+    val clusterId = cluster.id
+    var isBookmarked by remember(clusterId) {
+        mutableStateOf(prefs.getBoolean("bookmark_$clusterId", false))
+    }
+
     val scheme = remember(categoryStr, index) {
         getBannerColorScheme(categoryStr, index)
     }
@@ -167,7 +179,7 @@ fun NewsClusterCard(
                 .padding(20.dp)
         ) {
             Column {
-                // Category Tag
+                // Category Tag & Bookmark Button
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -182,6 +194,21 @@ fun NewsClusterCard(
                             style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp),
                             color = scheme.categoryText,
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        )
+                    }
+
+                    IconButton(
+                        onClick = {
+                            isBookmarked = !isBookmarked
+                            prefs.edit { putBoolean("bookmark_$clusterId", isBookmarked) }
+                        },
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isBookmarked) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
+                            contentDescription = "Bookmark",
+                            tint = scheme.titleText,
+                            modifier = Modifier.size(22.dp)
                         )
                     }
                 }

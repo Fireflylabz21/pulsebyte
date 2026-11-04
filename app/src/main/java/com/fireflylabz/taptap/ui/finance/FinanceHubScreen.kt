@@ -1,6 +1,6 @@
 package com.fireflylabz.taptap.ui.finance
 
-import androidx.compose.foundation.Image
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -117,11 +117,6 @@ fun FinanceHubScreen(
                                 modifier = Modifier.size(20.dp)
                             )
                         }
-                        Image(
-                            painter = painterResource(R.drawable.app_logo),
-                            contentDescription = "TapTap Logo",
-                            modifier = Modifier.size(32.dp)
-                        )
                         Column {
                             Text(
                                 text = "BusinessHub",
@@ -160,7 +155,12 @@ fun FinanceHubScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(
+                    top = paddingValues.calculateTopPadding(),
+                    start = paddingValues.calculateLeftPadding(androidx.compose.ui.unit.LayoutDirection.Ltr),
+                    end = paddingValues.calculateRightPadding(androidx.compose.ui.unit.LayoutDirection.Ltr),
+                    bottom = 0.dp
+                )
         ) {
             ScrollableTabRow(
                 selectedTabIndex = selectedTab,

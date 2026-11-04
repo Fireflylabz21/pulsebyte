@@ -7,6 +7,7 @@ import com.fireflylabz.taptap.domain.model.StockMover
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.android.*
+import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.serialization.kotlinx.json.*
@@ -48,13 +49,18 @@ data class YahooChartError(
     val description: String? = null
 )
 
-class YahooFinanceApiClient {
+object YahooFinanceApiClient {
     private val client = HttpClient(Android) {
         install(ContentNegotiation) {
             json(Json {
                 ignoreUnknownKeys = true
                 isLenient = true
             })
+        }
+        install(HttpTimeout) {
+            connectTimeoutMillis = 10000L
+            socketTimeoutMillis = 15000L
+            requestTimeoutMillis = 15000L
         }
     }
 

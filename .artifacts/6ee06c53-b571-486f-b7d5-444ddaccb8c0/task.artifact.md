@@ -1,0 +1,3 @@
+- [/] Update app name to "Pulsezinga" in strings.xml
+- [ ] Update app name to "Pulsezinga" in build.gradle.kts (if needed, e.g. manifest placeholders)
+- [ ] Update display names and string constants in source code

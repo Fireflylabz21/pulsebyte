@@ -14,6 +14,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import coil.compose.AsyncImage
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -57,17 +58,17 @@ fun SplashScreen(
             modifier = Modifier.padding(horizontal = 32.dp)
         ) {
             // Logo Image matching the attached design
-            Image(
-                painter = painterResource(R.drawable.app_logo),
-                contentDescription = "TapTap Logo",
+            AsyncImage(
+                model = R.drawable.app_logo,
+                contentDescription = "PulseZinga Logo",
                 modifier = Modifier.size(130.dp)
             )
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // App Name "TapTap" with Gold styling
+            // App Name "PulseZinga" with Gold styling
             Text(
-                text = "TapTap",
+                text = "PulseZinga",
                 style = MaterialTheme.typography.headlineLarge.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = 44.sp,

@@ -34,10 +34,10 @@ fun WebReaderScreen(
                     ) {
                         Image(
                             painter = painterResource(R.drawable.app_logo),
-                            contentDescription = "TapTap Logo",
+                            contentDescription = "PulseZinga Logo",
                             modifier = Modifier.size(28.dp)
                         )
-                        Text("TapTap Reader", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text("PulseZinga Reader", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     }
                 },
                 navigationIcon = {

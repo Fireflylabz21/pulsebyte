@@ -60,7 +60,12 @@ fun BookmarksScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(
+                    top = paddingValues.calculateTopPadding(),
+                    start = paddingValues.calculateLeftPadding(androidx.compose.ui.unit.LayoutDirection.Ltr),
+                    end = paddingValues.calculateRightPadding(androidx.compose.ui.unit.LayoutDirection.Ltr),
+                    bottom = 0.dp
+                )
         ) {
             when (val state = uiState) {
                 is HomeFeedUiState.Loading -> {
@@ -69,7 +74,7 @@ fun BookmarksScreen(
                     }
                 }
                 is HomeFeedUiState.Success -> {
-                    val bookmarkedClusters = state.clusters.filter { cluster ->
+                    val bookmarkedClusters = state.allClusters.filter { cluster ->
                         prefs.getBoolean("bookmark_${cluster.id}", false)
                     }
 

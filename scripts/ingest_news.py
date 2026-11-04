@@ -14,7 +14,7 @@ import datetime
 from urllib.parse import urlparse
 import feedparser
 import requests
-import google.generativeai as genai
+from google import genai
 from supabase import create_client, Client
 
 # Initialize Environment Variables
@@ -158,11 +158,11 @@ def validate_news_cluster(cluster):
     return len(errors) == 0, errors
 
 def call_gemini(api_key, raw_text, expected_topic=None):
-    """Calls Gemini API (trying gemini-3.5-flash-lite, with fallbacks to gemini-1.5-flash) to synthesize news into JSON."""
+    """Calls Gemini API (trying gemini-2.5-flash, with fallbacks) to synthesize news into JSON using google-genai SDK."""
     cleaned_key = api_key.strip()
-    genai.configure(api_key=cleaned_key)
+    client = genai.Client(api_key=cleaned_key)
 
-    models_to_try = ['gemini-3.5-flash-lite', 'gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-2.0-flash-exp']
+    models_to_try = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash']
     last_error = None
 
     prompt = f"{NEWS_SYNTHESIS_PROMPT}\n\nTarget Topic Category: {expected_topic or 'General'}\n\nRAW NEWS TEXT:\n{raw_text}"
@@ -170,8 +170,10 @@ def call_gemini(api_key, raw_text, expected_topic=None):
     for model_name in models_to_try:
         try:
             print(f"Attempting synthesis with model '{model_name}'...")
-            model = genai.GenerativeModel(model_name)
-            response = model.generate_content(prompt)
+            response = client.models.generate_content(
+                model=model_name,
+                contents=prompt
+            )
 
             text_result = response.text.strip()
             if text_result.startswith("```json"):
