@@ -42,9 +42,16 @@ sealed interface StoryFlashcardUiState {
 private val CATEG_LIST_VAL = CATEGORIES_LIST
 
 class StoryFlashcardViewModel(
-    initialCategory: String,
+    val initialCategory: String,
     private val repository: NewsRepository = NewsRepositoryImpl()
 ) : ViewModel() {
+
+    class Factory(private val category: String) : androidx.lifecycle.ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            return StoryFlashcardViewModel(category) as T
+        }
+    }
 
     private val _categoryIndex = MutableStateFlow(
         CATEGORIES_LIST.indexOfFirst { it.equals(initialCategory, ignoreCase = true) }.coerceAtLeast(0)

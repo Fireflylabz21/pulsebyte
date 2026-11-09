@@ -137,7 +137,9 @@ class MainActivity : ComponentActivity() {
                         ) { backStackEntry ->
                             val encodedCat = backStackEntry.arguments?.getString("category") ?: ""
                             val decodedCat = URLDecoder.decode(encodedCat, StandardCharsets.UTF_8.toString())
-                            val flashcardViewModel = remember(decodedCat) { StoryFlashcardViewModel(decodedCat) }
+                            val flashcardViewModel: StoryFlashcardViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+                                factory = StoryFlashcardViewModel.Factory(decodedCat)
+                            )
                             StoryFlashcardScreen(
                                 viewModel = flashcardViewModel,
                                 onBackClick = { navController.popBackStack() },
