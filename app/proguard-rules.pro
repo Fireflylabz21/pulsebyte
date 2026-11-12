@@ -1,6 +1,8 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles directive in build.gradle.kts.
+# --- Supabase SDK & Ktor ---
+-dontwarn io.github.jan.supabase.**
+-keep class io.github.jan.supabase.** { *; }
+-keep class io.ktor.** { *; }
+-keepattributes Signature, InnerClasses, EnclosingMethod, RuntimeVisibleAnnotations, RuntimeVisibleParameterAnnotations
 
 # --- Kotlinx Serialization ---
 -keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod
@@ -11,19 +13,12 @@
 -keepclassmembers class * {
     @kotlinx.serialization.SerialName <fields>;
 }
-
-# --- Ktor Client ---
--dontwarn io.ktor.**
--keep class io.ktor.** { *; }
-
-# --- Supabase SDK ---
--dontwarn io.github.jan.supabase.**
--keep class io.github.jan.supabase.** { *; }
+-keep class kotlinx.serialization.** { *; }
 
 # --- App Domain & Data Models ---
 -keep class com.fireflylabz.taptap.domain.model.** { *; }
 -keep class com.fireflylabz.taptap.data.remote.** { *; }
--keep class com.fireflylabz.taptap.ui.finance.** { *; }
+-keep class com.fireflylabz.taptap.ui.** { *; }
 
 # --- Coroutines ---
 -keepattributes InnerClasses,Signature,EnclosingMethod

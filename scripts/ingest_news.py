@@ -356,40 +356,43 @@ def run_ingestion_pipeline():
             print(f"[{topic}] No new articles found.")
             continue
 
-        batch = topic_articles[:3]
-        raw_text_list = [f"Title: {art['title']}\nSummary: {art['summary']}\nURL: {art['link']}" for art in batch]
-        raw_text = "\n\n".join(raw_text_list)
-
-        try:
-            synthesized_cluster = synthesize_news_with_llm_fallback(raw_text, expected_topic=topic)
-            objective_title = synthesized_cluster.get("objective_title", "")
-
-            if is_duplicate_cluster(objective_title, existing_titles):
-                print(f"[{topic}] Duplicate story detected ('{objective_title}'). Skipping.")
+        for art in topic_articles:
+            if is_duplicate_cluster(art["title"], existing_titles):
+                print(f"[{topic}] Duplicate story detected ('{art['title']}'). Skipping.")
                 continue
 
-            primary_source_url = batch[0]["link"] if batch else "https://news.google.com"
-            source_agency_name = synthesized_cluster.get("source_agency", "Economic Times • Mint")
+            raw_text = f"Title: {art['title']}\nSummary: {art['summary']}\nURL: {art['link']}"
 
-            cluster_payload = {
-                "objective_title": objective_title,
-                "category": topic,
-                "ai_summary_bullets": synthesized_cluster.get("ai_summary_bullets"),
-                "source_url": primary_source_url,
-                "source_names": source_agency_name,
-                "embedding": synthesized_cluster.get("embedding", [0.015] * 384),
-                "is_breaking": synthesized_cluster.get("is_breaking", False),
-                "reading_time_minutes": synthesized_cluster.get("reading_time_minutes", 2)
-            }
+            try:
+                synthesized_cluster = synthesize_news_with_llm_fallback(raw_text, expected_topic=topic)
+                objective_title = synthesized_cluster.get("objective_title", art["title"])
 
-            cluster_res = supabase.table("story_clusters").insert(cluster_payload).execute()
-            if cluster_res.data and len(cluster_res.data) > 0:
-                cluster_id = cluster_res.data[0]["id"]
-                total_clusters_generated += 1
-                existing_titles.add(objective_title)
-                print(f"[{topic}] Successfully created story cluster: {cluster_id} (Source: {source_agency_name})")
+                if is_duplicate_cluster(objective_title, existing_titles):
+                    print(f"[{topic}] Duplicate story detected after synthesis ('{objective_title}'). Skipping.")
+                    continue
 
-                for art in batch:
+                primary_source_url = art["link"]
+                source_agency_name = synthesized_cluster.get("source_agency", "Economic Times • Mint")
+
+                cluster_payload = {
+                    "objective_title": objective_title,
+                    "category": topic,
+                    "ai_summary_bullets": synthesized_cluster.get("ai_summary_bullets"),
+                    "source_url": primary_source_url,
+                    "source_names": source_agency_name,
+                    "embedding": synthesized_cluster.get("embedding", [0.015] * 384),
+                    "is_breaking": synthesized_cluster.get("is_breaking", False),
+                    "reading_time_minutes": synthesized_cluster.get("reading_time_minutes", 2)
+                }
+
+                cluster_res = supabase.table("story_clusters").insert(cluster_payload).execute()
+                if cluster_res.data and len(cluster_res.data) > 0:
+                    cluster_id = cluster_res.data[0]["id"]
+                    total_clusters_generated += 1
+                    existing_titles.add(objective_title)
+                    existing_titles.add(art["title"])
+                    print(f"[{topic}] Successfully created standalone story cluster: {cluster_id} - '{objective_title}'")
+
                     source_id = get_or_create_news_source(art["link"])
                     article_payload = {
                         "cluster_id": cluster_id,
@@ -406,8 +409,8 @@ def run_ingestion_pipeline():
                     except Exception as e:
                         print(f"Skipping article insert for {art['link']}: {e}")
 
-        except Exception as e:
-            print(f"[{topic}] Failed to synthesize cluster: {e}")
+            except Exception as e:
+                print(f"[{topic}] Failed to synthesize individual article ('{art['title']}'): {e}")
 
     print(f"Pipeline Execution Complete! Generated {total_clusters_generated} new story clusters and stored {total_articles_inserted} source articles across all 12 categories including Financial/IPO intelligence.")
 
