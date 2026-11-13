@@ -14,12 +14,20 @@ import datetime
 from urllib.parse import urlparse
 import feedparser
 import requests
+import sentry_sdk
 from google import genai
 from supabase import create_client, Client
 
 # Initialize Environment Variables
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_SERVICE_ROLE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+SENTRY_DSN = os.environ.get("SENTRY_DSN")
+
+sentry_sdk.init(
+    dsn=SENTRY_DSN,
+    traces_sample_rate=1.0,
+)
+
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 GEMINI_API_KEY_FALLBACK = os.environ.get("GEMINI_API_KEY_FALLBACK")
 GROK_API_KEY = os.environ.get("GROK_API_KEY")
@@ -36,9 +44,9 @@ You are an objective financial and general news editor. You are provided with ra
 TIGHTENED EDITORIAL & SAFETY GUARDRAILS:
 1. STRICT SAFETY & NSFW / CSAM FILTER: Strictly reject and omit any news, topics, or text related to pornography, explicit adult content, child sexual abuse material (CSAM), non-consensual sexual content, human trafficking, or graphic violence. If raw text contains prohibited or unsafe content, output an error or neutral empty state.
 2. FACTUALITY & ANTI-MISINFORMATION: Strictly prohibit speculation, fabrication, hallucination, or misquoting. Every bullet point must be 100% grounded in verified factual claims present in the provided source text.
-3. OBJECTIVE TITLE: Formulate a concise, clickbait-free objective title (Max 12 words) capturing the core event accurately without sensationalism. For business/finance/IPO/market stories, explicitly highlight key metrics (e.g., Sensex, Nifty, IPO issue size, RBI repo rate, or sector impact).
-4. EXACTLY 4 BULLETS: Generate EXACTLY 4 key bullet points synthesized strictly from factual claims across the provided text.
-5. TOPICS: Categorize into EXACTLY ONE of the following 12 topics:
+3. OBJECTIVE TITLE: Formulate a concise, clickbait-free objective title (Max 12 words) capturing the core event of this SINGLE article accurately.
+4. EXACTLY 4 BULLETS: Generate EXACTLY 4 key bullet points synthesized strictly from factual claims present in this SINGLE article only. Do not attempt to synthesize multiple stories or provide a roundup summary. Each article must have its own cluster.
+5. TOPICS: Categorize into EXACTLY ONE of the following 18 topics:
    - Politics
    - Crime
    - Business
@@ -51,6 +59,12 @@ TIGHTENED EDITORIAL & SAFETY GUARDRAILS:
    - Cricket
    - Enterprise AI
    - India
+   - Startups & VC
+   - Crypto & Web3
+   - EV & Sustainability
+   - Personal Finance
+   - Global Markets
+   - Gaming & Esports
 6. SOURCE AGENCY: Identify the primary news agency or publication name covering this (e.g. BBC, India Today, Yahoo, NYTimes, Reuters, Bloomberg, Mint, Economic Times).
 7. BREAKING & READING TIME: Determine if breaking (true/false) and estimate reading time in minutes (1 or 2).
 8. BIAS LABEL: Determine bias label ('LEFT', 'CENTER', or 'RIGHT').
@@ -73,18 +87,11 @@ OUTPUT FORMAT (JSON ONLY):
 """
 
 VALID_TOPICS = [
-    "Politics",
-    "Crime",
-    "Business",
-    "Entertainment",
-    "Sports",
-    "Health",
-    "Science & Technology",
-    "Weather",
-    "Lifestyle",
-    "Cricket",
-    "Enterprise AI",
-    "India"
+    "Politics", "Crime", "Business", "Entertainment", "Sports",
+    "Health", "Science & Technology", "Weather", "Lifestyle",
+    "Cricket", "Enterprise AI", "India", "Startups & VC",
+    "Crypto & Web3", "EV & Sustainability", "Personal Finance",
+    "Global Markets", "Gaming & Esports"
 ]
 
 PROHIBITED_KEYWORDS = [
@@ -267,6 +274,9 @@ def synthesize_news_with_llm_fallback(raw_text, expected_topic=None):
             print(f"Grok fallback key failed: {e}")
 
     raise RuntimeError("Critical Error: All LLM providers and fallback keys failed to synthesize news.")
+except Exception as e:
+    sentry_sdk.capture_exception(e)
+    raise e
 
 def get_or_create_news_source(url):
     """Gets or creates a news source entry in Supabase news_sources table based on domain."""
@@ -299,7 +309,7 @@ def run_ingestion_pipeline():
 
     print(f"Found {len(existing_urls)} existing URLs and {len(existing_titles)} existing story titles for deduplication.")
 
-    topic_feeds = {
+        topic_feeds = {
         "Politics": ["https://news.google.com/rss/search?q=Politics+Government&hl=en-US&gl=US&ceid=US:en"],
         "Crime": ["https://news.google.com/rss/search?q=Crime+Public+Safety&hl=en-US&gl=US&ceid=US:en"],
         "Business": [
@@ -322,6 +332,29 @@ def run_ingestion_pipeline():
         "India": [
             "https://news.google.com/rss/search?q=India+Economy+Markets+IPO&hl=en-IN&gl=IN&ceid=IN:en",
             "https://feeds.feedburner.com/ndtvnews-top-stories"
+        ],
+        "Startups & VC": [
+            "https://techcrunch.com/feed/",
+            "https://news.google.com/rss/search?q=Startups+Venture+Capital+Funding&hl=en-US&gl=US&ceid=US:en"
+        ],
+        "Crypto & Web3": [
+            "https://cointelegraph.com/rss",
+            "https://news.google.com/rss/search?q=Cryptocurrency+Bitcoin+Ethereum+Crypto+Regulation&hl=en-US&gl=US&ceid=US:en"
+        ],
+        "EV & Sustainability": [
+            "https://electrek.co/feed/",
+            "https://news.google.com/rss/search?q=Electric+Vehicles+EVs+Clean+Energy+Solar&hl=en-US&gl=US&ceid=US:en"
+        ],
+        "Personal Finance": [
+            "https://news.google.com/rss/search?q=Personal+Finance+Mutual+Funds+Tax+Savings+Investing&hl=en-IN&gl=IN&ceid=IN:en"
+        ],
+        "Global Markets": [
+            "https://www.cnbc.com/id/100003114/device/rss/rss.html",
+            "https://news.google.com/rss/search?q=Global+Economy+Geopolitics+Trade+Wars+Central+Banks&hl=en-US&gl=US&ceid=US:en"
+        ],
+        "Gaming & Esports": [
+            "https://www.gamespot.com/feeds/news/",
+            "https://news.google.com/rss/search?q=Video+Games+Esports+PlayStation+Xbox&hl=en-US&gl=US&ceid=US:en"
         ]
     }
 

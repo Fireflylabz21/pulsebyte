@@ -24,7 +24,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import coil.compose.AsyncImage
@@ -33,35 +32,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fireflylabz.taptap.R
+import com.fireflylabz.taptap.domain.model.CategoryRegistry
 import com.fireflylabz.taptap.domain.model.MarketIndex
 import com.fireflylabz.taptap.ui.feed.HomeFeedUiState
 import com.fireflylabz.taptap.ui.feed.HomeFeedViewModel
 import com.fireflylabz.taptap.ui.finance.FinanceViewModel
-import com.fireflylabz.taptap.ui.flashcard.CATEGORIES_LIST
 import kotlinx.coroutines.delay
 import java.util.Locale
 
-private data class CategoryTileStyle(
-    val title: String,
-    val icon: ImageVector,
-    val colors: List<Color>
-)
-
-private val categoryStyles = mapOf(
-    "Top 10 News" to CategoryTileStyle("Top 10 News", Icons.Filled.Star, listOf(Color(0xFF833AB4), Color(0xFFFD1D1D), Color(0xFFFCB045))),
-    "Politics" to CategoryTileStyle("Politics", Icons.Filled.AccountBalance, listOf(Color(0xFF1E3C72), Color(0xFF2A5298))),
-    "Crime" to CategoryTileStyle("Crime", Icons.Filled.Gavel, listOf(Color(0xFF7F1D1D), Color(0xFFB91C1C))),
-    "Business" to CategoryTileStyle("Business", Icons.Filled.BusinessCenter, listOf(Color(0xFF064E3B), Color(0xFF047857))),
-    "Entertainment" to CategoryTileStyle("Entertainment", Icons.Filled.Movie, listOf(Color(0xFF4C1D95), Color(0xFF6D28D9))),
-    "Sports" to CategoryTileStyle("Sports", Icons.Filled.SportsSoccer, listOf(Color(0xFF7C2D12), Color(0xFFC2410C))),
-    "Health & Wellness" to CategoryTileStyle("Health & Wellness", Icons.Filled.LocalHospital, listOf(Color(0xFF065F46), Color(0xFF0F766E))),
-    "Science & Technology" to CategoryTileStyle("Science & Tech", Icons.Filled.Science, listOf(Color(0xFF0F172A), Color(0xFF1E293B))),
-    "Weather" to CategoryTileStyle("Weather", Icons.Filled.WbSunny, listOf(Color(0xFF1E293B), Color(0xFF334155))),
-    "Lifestyle & Consumer Advice" to CategoryTileStyle("Lifestyle", Icons.Filled.EmojiEmotions, listOf(Color(0xFF831843), Color(0xFFBE185D))),
-    "Cricket" to CategoryTileStyle("Cricket", Icons.Filled.SportsCricket, listOf(Color(0xFF14532D), Color(0xFF15803D))),
-    "Enterprise AI" to CategoryTileStyle("Enterprise AI", Icons.Filled.SmartToy, listOf(Color(0xFF311B92), Color(0xFF4527A0))),
-    "India" to CategoryTileStyle("India", Icons.Filled.Public, listOf(Color(0xFFB45309), Color(0xFF047857)))
-)
+val CATEGORIES_LIST = CategoryRegistry.categoriesList
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -155,7 +134,7 @@ fun HomeScreen(
                         )
                         Column {
                             Text(
-                                text = "Pulsezinga",
+                                text = "PulseZinga",
                                 style = MaterialTheme.typography.headlineMedium.copy(
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 28.sp
@@ -174,7 +153,6 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // BusinessHub Button
                         IconButton(
                             onClick = onFinanceClick,
                             modifier = Modifier
@@ -189,7 +167,6 @@ fun HomeScreen(
                             )
                         }
 
-                        // Bookmark Button
                         IconButton(
                             onClick = onBookmarksClick,
                             modifier = Modifier
@@ -204,7 +181,6 @@ fun HomeScreen(
                             )
                         }
 
-                        // About Us Button
                         IconButton(
                             onClick = onAboutClick,
                             modifier = Modifier
@@ -236,7 +212,6 @@ fun HomeScreen(
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // 1. Featured Top 10 News Banner Card (With Audio Briefing Button inside)
             item {
                 Card(
                     shape = RoundedCornerShape(22.dp),
@@ -271,7 +246,7 @@ fun HomeScreen(
                                     shape = RoundedCornerShape(8.dp)
                                 ) {
                                     Text(
-                                        text = "🔥 TOP 10 NEWS OF THE DAY (${bannerIndex + 1}/10)",
+                                        text = "🔥 TOP 10 NEWS (${bannerIndex + 1}/10)",
                                         style = MaterialTheme.typography.labelSmall.copy(
                                             fontWeight = FontWeight.Bold,
                                             letterSpacing = 0.8.sp
@@ -281,7 +256,6 @@ fun HomeScreen(
                                     )
                                 }
 
-                                // Audio Briefing Button inside Top 10 News Banner
                                 IconButton(
                                     onClick = {
                                         val currentTts = tts
@@ -294,7 +268,7 @@ fun HomeScreen(
                                                 val briefingText = if (topStory != null) {
                                                     "PulseZinga Daily Audio Briefing. Top story: ${topStory.displayTitle}. Key points: ${topStory.displayBullets.joinToString(". ")}"
                                                 } else {
-                                                    "Welcome to PulseZinga. No stories currently available."
+                                                    "Welcome to PulseZinga."
                                                 }
                                                 currentTts.speak(briefingText, TextToSpeech.QUEUE_FLUSH, null, null)
                                                 isPlayingAudio = true
@@ -316,15 +290,11 @@ fun HomeScreen(
 
                             AnimatedContent(
                                 targetState = activeBannerStory,
-                                transitionSpec = {
-                                    (fadeIn(animationSpec = tween(500)) + slideInVertically(animationSpec = tween(500)) { height -> height / 2 })
-                                        .togetherWith(fadeOut(animationSpec = tween(500)) + slideOutVertically(animationSpec = tween(500)) { height -> -height / 2 })
-                                },
                                 label = "BannerStoryRotation"
                             ) { story ->
                                 Column {
                                     Text(
-                                        text = story?.displayTitle ?: "Earth's Climate Crosses Key Tipping Point, Warn Scientists",
+                                        text = story?.displayTitle ?: "Latest News Loading...",
                                         style = MaterialTheme.typography.titleMedium.copy(
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 18.sp,
@@ -346,7 +316,6 @@ fun HomeScreen(
                 }
             }
 
-            // 2. Market Ticker Cards for Sensex & Nifty 50
             if (sensex != null || nifty != null) {
                 item {
                     Row(
@@ -371,14 +340,12 @@ fun HomeScreen(
                 }
             }
 
-            // 3. AI Jobs Banner Card (Positioned right below Sensex/Nifty tiles)
             item {
                 AiJobsBannerCard(
                     onClick = onJobsClick
                 )
             }
 
-            // 4. Section Header: Explore by Category
             item {
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(
@@ -400,7 +367,6 @@ fun HomeScreen(
                 }
             }
 
-            // 5. Category Grid Items (Chunked into pairs of 2 per row - Pinned categories first)
             val chunkedCategories = sortedGridCategories.chunked(2)
             items(chunkedCategories) { rowCategories ->
                 Row(
@@ -408,7 +374,7 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     rowCategories.forEach { category ->
-                        val style = categoryStyles[category] ?: CategoryTileStyle(category, Icons.Filled.Star, listOf(Color(0xFF1E3C72), Color(0xFF2A5298)))
+                        val style = CategoryRegistry.getStyle(category)
                         val isPinned = pinnedCategories.contains(category)
 
                         Card(
@@ -473,7 +439,6 @@ fun HomeScreen(
                 }
             }
 
-            // 6. Bottom Banner: WhatsApp Channel Alerts
             item {
                 Spacer(modifier = Modifier.height(4.dp))
                 WhatsAppAlertsBannerCard(
@@ -484,46 +449,6 @@ fun HomeScreen(
                 )
             }
         }
-    }
-
-    // Breaking News Dialog Alert
-    if (showBreakingDialog && breakingStory != null) {
-        AlertDialog(
-            onDismissRequest = { showBreakingDialog = false },
-            containerColor = Color(0xFF18181B),
-            title = {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Surface(color = Color(0xFF7F1D1D), shape = RoundedCornerShape(6.dp)) {
-                        Text("BREAKING", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold), color = Color(0xFFF87171), modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
-                    }
-                    Text(text = breakingStory?.displayTitle ?: "Breaking News", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = Color.White)
-                }
-            },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    breakingStory?.displayBullets?.forEach { bullet ->
-                        Text(text = "• $bullet", style = MaterialTheme.typography.bodyMedium, color = Color(0xFFE2E8F0))
-                    }
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        val cat = breakingStory?.displayCategory ?: "Top 10 News"
-                        showBreakingDialog = false
-                        onCategoryClick(cat)
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF38BDF8))
-                ) {
-                    Text("Explore Story", color = Color.Black, fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showBreakingDialog = false }) {
-                    Text("Close", color = Color(0xFFA1A1AA))
-                }
-            }
-        )
     }
 }
 

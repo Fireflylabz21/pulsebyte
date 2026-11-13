@@ -35,7 +35,13 @@ object CategoryRegistry {
         "Lifestyle & Consumer Advice",
         "Cricket",
         "Enterprise AI",
-        "India"
+        "India",
+        "Startups & VC",
+        "Crypto & Web3",
+        "EV & Sustainability",
+        "Personal Finance",
+        "Global Markets",
+        "Gaming & Esports"
     )
 
     private val categoryStyles = mapOf(
@@ -51,7 +57,13 @@ object CategoryRegistry {
         "Lifestyle & Consumer Advice" to CategoryTileStyle("Lifestyle", Icons.Filled.EmojiEmotions, listOf(Color(0xFF831843), Color(0xFFBE185D))),
         "Cricket" to CategoryTileStyle("Cricket", Icons.Filled.SportsCricket, listOf(Color(0xFF14532D), Color(0xFF15803D))),
         "Enterprise AI" to CategoryTileStyle("Enterprise AI", Icons.Filled.SmartToy, listOf(Color(0xFF311B92), Color(0xFF4527A0))),
-        "India" to CategoryTileStyle("India", Icons.Filled.Public, listOf(Color(0xFFB45309), Color(0xFF047857)))
+        "India" to CategoryTileStyle("India", Icons.Filled.Public, listOf(Color(0xFFB45309), Color(0xFF047857))),
+        "Startups & VC" to CategoryTileStyle("Startups & VC", Icons.Filled.RocketLaunch, listOf(Color(0xFFBE123C), Color(0xFFE11D48))),
+        "Crypto & Web3" to CategoryTileStyle("Crypto & Web3", Icons.Filled.CurrencyBitcoin, listOf(Color(0xFFB45309), Color(0xFFD97706))),
+        "EV & Sustainability" to CategoryTileStyle("EV & Sustainability", Icons.Filled.ElectricCar, listOf(Color(0xFF047857), Color(0xFF10B981))),
+        "Personal Finance" to CategoryTileStyle("Personal Finance", Icons.Filled.Savings, listOf(Color(0xFF0D9488), Color(0xFF14B8A6))),
+        "Global Markets" to CategoryTileStyle("Global Markets", Icons.Filled.Language, listOf(Color(0xFF1D4ED8), Color(0xFF3B82F6))),
+        "Gaming & Esports" to CategoryTileStyle("Gaming & Esports", Icons.Filled.SportsEsports, listOf(Color(0xFF6D28D9), Color(0xFF8B5CF6)))
     )
 
     fun getStyle(category: String): CategoryTileStyle {
@@ -68,6 +80,54 @@ object CategoryRegistry {
     fun getFlashcardColorScheme(category: String): FlashcardColorScheme {
         val norm = category.lowercase().trim()
         return when {
+            norm.contains("startup") || norm.contains("vc") -> FlashcardColorScheme(
+                gradientColors = listOf(Color(0xFF881337), Color(0xFFBE123C)),
+                categoryContainer = Color(0xFFFB7185),
+                categoryText = Color(0xFF881337),
+                titleText = Color.White,
+                bulletText = Color(0xFFFFE4E6),
+                bulletDot = Color(0xFFFDA4AF)
+            )
+            norm.contains("crypto") || norm.contains("web3") || norm.contains("bitcoin") -> FlashcardColorScheme(
+                gradientColors = listOf(Color(0xFF78350F), Color(0xFFB45309)),
+                categoryContainer = Color(0xFFFBBF24),
+                categoryText = Color(0xFF78350F),
+                titleText = Color.White,
+                bulletText = Color(0xFFFEF3C7),
+                bulletDot = Color(0xFFFDE68A)
+            )
+            norm.contains("ev") || norm.contains("sustainability") || norm.contains("electric") -> FlashcardColorScheme(
+                gradientColors = listOf(Color(0xFF064E3B), Color(0xFF047857)),
+                categoryContainer = Color(0xFF34D399),
+                categoryText = Color(0xFF064E3B),
+                titleText = Color.White,
+                bulletText = Color(0xFFD1FAE5),
+                bulletDot = Color(0xFF6EE7B7)
+            )
+            norm.contains("personal finance") || norm.contains("saving") || norm.contains("wealth") -> FlashcardColorScheme(
+                gradientColors = listOf(Color(0xFF115E59), Color(0xFF0D9488)),
+                categoryContainer = Color(0xFF2DD4BF),
+                categoryText = Color(0xFF115E59),
+                titleText = Color.White,
+                bulletText = Color(0xFFCCFBF1),
+                bulletDot = Color(0xFF5EEAD4)
+            )
+            norm.contains("global") || norm.contains("markets") -> FlashcardColorScheme(
+                gradientColors = listOf(Color(0xFF1E40AF), Color(0xFF1D4ED8)),
+                categoryContainer = Color(0xFF60A5FA),
+                categoryText = Color(0xFF1E40AF),
+                titleText = Color.White,
+                bulletText = Color(0xFFDBEAFE),
+                bulletDot = Color(0xFF93C5FD)
+            )
+            norm.contains("gaming") || norm.contains("esports") -> FlashcardColorScheme(
+                gradientColors = listOf(Color(0xFF5B21B6), Color(0xFF6D28D9)),
+                categoryContainer = Color(0xFFA78BFA),
+                categoryText = Color(0xFF5B21B6),
+                titleText = Color.White,
+                bulletText = Color(0xFFEDE9FE),
+                bulletDot = Color(0xFFC4B5FD)
+            )
             norm.contains("enterprise") || norm.contains("enterprise ai") -> FlashcardColorScheme(
                 gradientColors = listOf(Color(0xFF311B92), Color(0xFF4527A0)),
                 categoryContainer = Color(0xFF00E5FF),
