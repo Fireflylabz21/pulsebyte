@@ -3,6 +3,8 @@
 -keep class io.github.jan.supabase.** { *; }
 -keep class io.ktor.** { *; }
 -keepattributes Signature, InnerClasses, EnclosingMethod, RuntimeVisibleAnnotations, RuntimeVisibleParameterAnnotations
+-dontwarn io.ktor.util.debug.IntellijIdeaDebugDetector
+-dontwarn java.lang.management.**
 
 # --- Kotlinx Serialization ---
 -keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod
