@@ -132,12 +132,28 @@ def resolve_final_url(url):
 
     return url
 
+STOP_WORDS = {"the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for", "with", "by", "from", "is", "are", "was", "were", "it", "this", "that", "as", "says", "said"}
+
 def is_duplicate_cluster(title, existing_titles):
-    """Checks if a story cluster with a similar or identical title already exists to avoid duplicates."""
-    clean_title = "".join(c.lower() for c in title if c.isalnum() or c.isspace()).strip()
+    """Checks if a story cluster with a similar title already exists using Jaccard token similarity (>= 35% overlap)."""
+    def tokenize(text):
+        words = "".join(c.lower() for c in text if c.isalnum() or c.isspace()).split()
+        return {w for w in words if w not in STOP_WORDS}
+
+    tokens_a = tokenize(title)
+    if not tokens_a:
+        return False
+
     for existing in existing_titles:
-        clean_existing = "".join(c.lower() for c in existing if c.isalnum() or c.isspace()).strip()
-        if clean_title == clean_existing or (len(clean_title) > 10 and clean_title in clean_existing):
+        tokens_b = tokenize(existing)
+        if not tokens_b:
+            continue
+        
+        intersection = tokens_a.intersection(tokens_b)
+        union = tokens_a.union(tokens_b)
+        jaccard = len(intersection) / len(union) if union else 0.0
+
+        if jaccard >= 0.35 or tokens_a == tokens_b:
             return True
     return False
 
