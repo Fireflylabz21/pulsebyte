@@ -310,25 +310,38 @@ def run_ingestion_pipeline():
 
     print(f"Found {len(existing_urls)} existing URLs and {len(existing_titles)} existing story titles for deduplication.")
 
-            topic_feeds = {
+                topic_feeds = {
         "Politics": ["https://news.google.com/rss/search?q=Politics+Government&hl=en-US&gl=US&ceid=US:en"],
         "Crime": ["https://news.google.com/rss/search?q=Crime+Public+Safety&hl=en-US&gl=US&ceid=US:en"],
         "Business": [
             "https://feeds.bbci.co.uk/news/business/rss.xml",
+            "https://www.reuters.com/arc/outboundfeeds/business-news/?outputType=xml",
             "https://news.google.com/rss/search?q=Business+Finance+IPO+Sensex+Nifty&hl=en-IN&gl=IN&ceid=IN:en"
         ],
-        "Entertainment": ["https://news.google.com/rss/search?q=Entertainment+Celebrity+Culture&hl=en-US&gl=US&ceid=US:en"],
-        "Sports": ["https://news.google.com/rss/search?q=Sports&hl=en-US&gl=US&ceid=US:en"],
-        "Health": ["https://news.google.com/rss/search?q=Health+Wellness&hl=en-US&gl=US&ceid=US:en"],
+        "Entertainment": [
+            "https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml",
+            "https://news.google.com/rss/search?q=Entertainment+Celebrity+Culture&hl=en-US&gl=US&ceid=US:en"
+        ],
+        "Sports": [
+            "https://feeds.bbci.co.uk/news/sport/rss.xml",
+            "https://news.google.com/rss/search?q=Sports&hl=en-US&gl=US&ceid=US:en"
+        ],
+        "Health": [
+            "https://www.who.int/rss-feeds/news-english.xml",
+            "https://news.google.com/rss/search?q=Health+Wellness&hl=en-US&gl=US&ceid=US:en"
+        ],
         "Science & Technology": [
             "https://feeds.bbci.co.uk/news/technology/rss.xml",
+            "https://www.wired.com/feed/rss",
             "https://news.google.com/rss/search?q=Science+Technology&hl=en-US&gl=US&ceid=US:en"
         ],
         "Weather": ["https://news.google.com/rss/search?q=Weather+Natural+Disasters&hl=en-US&gl=US&ceid=US:en"],
         "Lifestyle": ["https://news.google.com/rss/search?q=Lifestyle+Consumer+Advice&hl=en-US&gl=US&ceid=US:en"],
         "Cricket": ["https://news.google.com/rss/search?q=Cricket&hl=en-US&gl=US&ceid=US:en"],
         "Enterprise AI": [
-            "https://news.google.com/rss/search?q=Enterprise+AI+Generative+AI&hl=en-US&gl=US&ceid=US:en"
+            "https://news.google.com/rss/search?q=Enterprise+AI+Generative+AI&hl=en-US&gl=US&ceid=US:en",
+            "https://www.artificialintelligence-news.com/feed/",
+            "https://techcrunch.com/category/artificial-intelligence/feed/"
         ],
         "India": [
             "https://news.google.com/rss/search?q=India+Economy+Markets+IPO&hl=en-IN&gl=IN&ceid=IN:en",
@@ -350,7 +363,7 @@ def run_ingestion_pipeline():
             "https://news.google.com/rss/search?q=Personal+Finance+Mutual+Funds+Tax+Savings+Investing&hl=en-IN&gl=IN&ceid=IN:en"
         ],
         "Global Markets": [
-            "https://www.cnbc.com/id/100003114/device/rss/rss.html",
+            "https://www.cnbc.com/id/100003114/device/rss/rss.xml",
             "https://news.google.com/rss/search?q=Global+Economy+Geopolitics+Trade+Wars+Central+Banks&hl=en-US&gl=US&ceid=US:en"
         ],
         "Gaming & Esports": [
