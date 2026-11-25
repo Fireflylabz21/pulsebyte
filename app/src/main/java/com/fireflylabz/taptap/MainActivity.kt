@@ -17,8 +17,6 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.fireflylabz.taptap.ui.feed.HomeFeedViewModel
-import com.fireflylabz.taptap.ui.finance.FinanceHubScreen
-import com.fireflylabz.taptap.ui.finance.FinanceViewModel
 import com.fireflylabz.taptap.ui.flashcard.StoryFlashcardScreen
 import com.fireflylabz.taptap.ui.flashcard.StoryFlashcardViewModel
 import com.fireflylabz.taptap.ui.jobs.JobsScreen
@@ -39,7 +37,6 @@ import java.util.concurrent.TimeUnit
 class MainActivity : ComponentActivity() {
 
     private val homeFeedViewModel: HomeFeedViewModel by viewModels()
-    private val financeViewModel: FinanceViewModel by viewModels()
     private val jobsViewModel: JobsViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -72,7 +69,6 @@ class MainActivity : ComponentActivity() {
                         composable("home") {
                             HomeScreen(
                                 viewModel = homeFeedViewModel,
-                                financeViewModel = financeViewModel,
                                 onCategoryClick = { category ->
                                     val encodedCat = URLEncoder.encode(category, StandardCharsets.UTF_8.toString())
                                     navController.navigate("flashcard/$encodedCat")
@@ -82,9 +78,6 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onAboutClick = {
                                     navController.navigate("about")
-                                },
-                                onFinanceClick = {
-                                    navController.navigate("finance_hub")
                                 },
                                 onJobsClick = {
                                     navController.navigate("jobs")
@@ -100,13 +93,6 @@ class MainActivity : ComponentActivity() {
                                     val encodedUrl = URLEncoder.encode(applyUrl, StandardCharsets.UTF_8.toString())
                                     navController.navigate("web_reader/$encodedUrl")
                                 }
-                            )
-                        }
-                        composable("finance_hub") {
-                            FinanceHubScreen(
-                                viewModel = financeViewModel,
-                                onBackClick = { navController.popBackStack() },
-                                onAboutClick = { navController.navigate("about") }
                             )
                         }
                         composable("bookmarks") {
@@ -136,7 +122,11 @@ class MainActivity : ComponentActivity() {
                             arguments = listOf(navArgument("category") { type = NavType.StringType })
                         ) { backStackEntry ->
                             val encodedCat = backStackEntry.arguments?.getString("category") ?: ""
-                            val decodedCat = URLDecoder.decode(encodedCat, StandardCharsets.UTF_8.toString())
+                            val decodedCat = try {
+                                URLDecoder.decode(encodedCat, StandardCharsets.UTF_8.toString())
+                            } catch (e: Exception) {
+                                encodedCat
+                            }
                             val flashcardViewModel: StoryFlashcardViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
                                 factory = StoryFlashcardViewModel.Factory(decodedCat)
                             )
@@ -156,7 +146,11 @@ class MainActivity : ComponentActivity() {
                             arguments = listOf(navArgument("url") { type = NavType.StringType })
                         ) { backStackEntry ->
                             val encodedUrl = backStackEntry.arguments?.getString("url") ?: ""
-                            val decodedUrl = URLDecoder.decode(encodedUrl, StandardCharsets.UTF_8.toString())
+                            val decodedUrl = try {
+                                URLDecoder.decode(encodedUrl, StandardCharsets.UTF_8.toString())
+                            } catch (e: Exception) {
+                                encodedUrl
+                            }
                             WebReaderScreen(
                                 url = decodedUrl,
                                 onBackClick = { navController.popBackStack() }

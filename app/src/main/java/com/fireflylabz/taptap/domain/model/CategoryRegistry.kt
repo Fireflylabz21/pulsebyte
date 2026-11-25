@@ -41,7 +41,12 @@ object CategoryRegistry {
         "EV & Sustainability",
         "Personal Finance",
         "Global Markets",
-        "Gaming & Esports"
+        "Gaming & Esports",
+        "US",
+        "UK",
+        "Europe",
+        "Global",
+        "World Economy"
     )
 
     private val categoryStyles = mapOf(
@@ -63,7 +68,12 @@ object CategoryRegistry {
         "EV & Sustainability" to CategoryTileStyle("EV & Sustainability", Icons.Filled.ElectricCar, listOf(Color(0xFF047857), Color(0xFF10B981))),
         "Personal Finance" to CategoryTileStyle("Personal Finance", Icons.Filled.Savings, listOf(Color(0xFF0D9488), Color(0xFF14B8A6))),
         "Global Markets" to CategoryTileStyle("Global Markets", Icons.Filled.Language, listOf(Color(0xFF1D4ED8), Color(0xFF3B82F6))),
-        "Gaming & Esports" to CategoryTileStyle("Gaming & Esports", Icons.Filled.SportsEsports, listOf(Color(0xFF6D28D9), Color(0xFF8B5CF6)))
+        "Gaming & Esports" to CategoryTileStyle("Gaming & Esports", Icons.Filled.SportsEsports, listOf(Color(0xFF6D28D9), Color(0xFF8B5CF6))),
+        "US" to CategoryTileStyle("US", Icons.Filled.Flag, listOf(Color(0xFF1E3A8A), Color(0xFF1E40AF))),
+        "UK" to CategoryTileStyle("UK", Icons.Filled.Flag, listOf(Color(0xFFB91C1C), Color(0xFFEF4444))),
+        "Europe" to CategoryTileStyle("Europe", Icons.Filled.Public, listOf(Color(0xFF1D4ED8), Color(0xFF3B82F6))),
+        "Global" to CategoryTileStyle("Global", Icons.Filled.Public, listOf(Color(0xFF0F172A), Color(0xFF1E293B))),
+        "World Economy" to CategoryTileStyle("World Economy", Icons.Filled.TrendingUp, listOf(Color(0xFF047857), Color(0xFF059669)))
     )
 
     fun getStyle(category: String): CategoryTileStyle {
@@ -127,6 +137,46 @@ object CategoryRegistry {
                 titleText = Color.White,
                 bulletText = Color(0xFFEDE9FE),
                 bulletDot = Color(0xFFC4B5FD)
+            )
+            norm.contains("us") -> FlashcardColorScheme(
+                gradientColors = listOf(Color(0xFF1E3A8A), Color(0xFF1E40AF)),
+                categoryContainer = Color(0xFF60A5FA),
+                categoryText = Color(0xFF1E3A8A),
+                titleText = Color.White,
+                bulletText = Color(0xFFDBEAFE),
+                bulletDot = Color(0xFF93C5FD)
+            )
+            norm.contains("uk") -> FlashcardColorScheme(
+                gradientColors = listOf(Color(0xFF991B1B), Color(0xFFB91C1C)),
+                categoryContainer = Color(0xFFF87171),
+                categoryText = Color(0xFF991B1B),
+                titleText = Color.White,
+                bulletText = Color(0xFFFEE2E2),
+                bulletDot = Color(0xFFFDA4AF)
+            )
+            norm.contains("europe") -> FlashcardColorScheme(
+                gradientColors = listOf(Color(0xFF1E40AF), Color(0xFF3B82F6)),
+                categoryContainer = Color(0xFF93C5FD),
+                categoryText = Color(0xFF1E40AF),
+                titleText = Color.White,
+                bulletText = Color(0xFFDBEAFE),
+                bulletDot = Color(0xFFBFDBFE)
+            )
+            norm.contains("global") -> FlashcardColorScheme(
+                gradientColors = listOf(Color(0xFF0F172A), Color(0xFF1E293B)),
+                categoryContainer = Color(0xFF94A3B8),
+                categoryText = Color(0xFF0F172A),
+                titleText = Color.White,
+                bulletText = Color(0xFFF1F5F9),
+                bulletDot = Color(0xFFCBD5E1)
+            )
+            norm.contains("world economy") -> FlashcardColorScheme(
+                gradientColors = listOf(Color(0xFF065F46), Color(0xFF059669)),
+                categoryContainer = Color(0xFF34D399),
+                categoryText = Color(0xFF065F46),
+                titleText = Color.White,
+                bulletText = Color(0xFFD1FAE5),
+                bulletDot = Color(0xFF6EE7B7)
             )
             norm.contains("enterprise") || norm.contains("enterprise ai") -> FlashcardColorScheme(
                 gradientColors = listOf(Color(0xFF311B92), Color(0xFF4527A0)),

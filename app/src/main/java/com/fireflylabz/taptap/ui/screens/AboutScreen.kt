@@ -17,7 +17,7 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -237,6 +237,57 @@ fun AboutScreen(
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(20.dp)
                     )
+                }
+            }
+
+            // Granular Notification Preferences Card
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF18181B)),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "🔔 Notification Beats Preferences",
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        color = Color.White
+                    )
+                    Text(
+                        text = "Toggle push alerts by specific news beats rather than all-or-nothing alerts.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFFA1A1AA)
+                    )
+
+                    val prefs = context.getSharedPreferences("pulse_notifications_prefs", android.content.Context.MODE_PRIVATE)
+                    val beats = listOf("Enterprise AI", "Startups & VC", "Cricket", "Politics", "Crypto & Web3", "Science & Technology", "Personal Finance")
+
+                    beats.forEach { beat ->
+                        var isEnabled by remember { mutableStateOf(prefs.getBoolean("notif_beat_$beat", true)) }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = beat,
+                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                                color = Color.White
+                            )
+                            Switch(
+                                checked = isEnabled,
+                                onCheckedChange = { checked ->
+                                    isEnabled = checked
+                                    prefs.edit().putBoolean("notif_beat_$beat", checked).apply()
+                                },
+                                colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF38BDF8))
+                            )
+                        }
+                    }
                 }
             }
             

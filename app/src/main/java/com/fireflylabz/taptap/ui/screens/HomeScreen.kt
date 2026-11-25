@@ -33,10 +33,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fireflylabz.taptap.R
 import com.fireflylabz.taptap.domain.model.CategoryRegistry
-import com.fireflylabz.taptap.domain.model.MarketIndex
 import com.fireflylabz.taptap.ui.feed.HomeFeedUiState
 import com.fireflylabz.taptap.ui.feed.HomeFeedViewModel
-import com.fireflylabz.taptap.ui.finance.FinanceViewModel
 import kotlinx.coroutines.delay
 import java.util.Locale
 
@@ -46,21 +44,16 @@ val CATEGORIES_LIST = CategoryRegistry.categoriesList
 @Composable
 fun HomeScreen(
     viewModel: HomeFeedViewModel,
-    financeViewModel: FinanceViewModel,
     onCategoryClick: (String) -> Unit,
     onBookmarksClick: () -> Unit,
     onAboutClick: () -> Unit,
-    onFinanceClick: () -> Unit,
     onJobsClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val indices by financeViewModel.indices.collectAsState()
     val pinnedCategories by viewModel.pinnedCategories.collectAsState()
     val breakingStory by viewModel.latestBreakingStory.collectAsState()
     var showBreakingDialog by remember { mutableStateOf(false) }
 
-    val sensex = indices.firstOrNull { it.symbol == "^BSESN" || it.symbol.contains("SENSEX", ignoreCase = true) }
-    val nifty = indices.firstOrNull { it.symbol == "^NSEI" || it.symbol.contains("NIFTY", ignoreCase = true) }
     val context = LocalContext.current
     var tts by remember { mutableStateOf<TextToSpeech?>(null) }
     var isPlayingAudio by remember { mutableStateOf(false) }
@@ -153,20 +146,6 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        IconButton(
-                            onClick = onFinanceClick,
-                            modifier = Modifier
-                                .size(40.dp)
-                                .background(Color(0xFF18181B), CircleShape)
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.TrendingUp,
-                                contentDescription = "BusinessHub",
-                                tint = Color(0xFF34D399),
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-
                         IconButton(
                             onClick = onBookmarksClick,
                             modifier = Modifier
@@ -311,30 +290,6 @@ fun HomeScreen(
                                     )
                                 }
                             }
-                        }
-                    }
-                }
-            }
-
-            if (sensex != null || nifty != null) {
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        if (sensex != null) {
-                            MarketBannerCard(
-                                index = sensex,
-                                modifier = Modifier.weight(1f),
-                                onClick = onFinanceClick
-                            )
-                        }
-                        if (nifty != null) {
-                            MarketBannerCard(
-                                index = nifty,
-                                modifier = Modifier.weight(1f),
-                                onClick = onFinanceClick
-                            )
                         }
                     }
                 }
@@ -616,82 +571,6 @@ fun WhatsAppAlertsBannerCard(
                         )
                     }
                 }
-            }
-        }
-    }
-}
-
-@Composable
-fun MarketBannerCard(
-    index: MarketIndex,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    val isPositive = index.changePct >= 0
-    val isSensex = index.symbol.contains("SENSEX", ignoreCase = true)
-    val containerColor = if (isSensex) Color(0xFF131B2E) else Color(0xFF11221C)
-    val accentColor = if (isSensex) Color(0xFF60A5FA) else Color(0xFF34D399)
-
-    Card(
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = containerColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        modifier = modifier
-            .height(120.dp)
-            .clickable(onClick = onClick)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(14.dp),
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = index.name,
-                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, fontSize = 14.sp),
-                    color = Color.White,
-                    maxLines = 1
-                )
-                Surface(
-                    color = if (isPositive) Color(0xFF065F46) else Color(0xFF7F1D1D),
-                    shape = RoundedCornerShape(4.dp)
-                ) {
-                    Text(
-                        text = "${if (isPositive) "+" else ""}${index.changePct}%",
-                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 11.sp),
-                        color = if (isPositive) Color(0xFF34D399) else Color(0xFFF87171),
-                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
-                    )
-                }
-            }
-
-            Text(
-                text = "%,.2f".format(index.price),
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, fontSize = 18.sp),
-                color = Color.White
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "RSI: ${index.rsi14}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFFA1A1AA),
-                    fontSize = 11.sp
-                )
-                Text(
-                    text = "Vol: %,d".format(index.volume / 1000000) + "M",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = accentColor,
-                    fontSize = 11.sp
-                )
             }
         }
     }

@@ -33,10 +33,17 @@ object BreakingNewsNotificationHelper {
         }
     }
 
-    fun sendBreakingNewsNotification(context: Context, sourceUrl: String, title: String) {
+    fun sendBreakingNewsNotification(context: Context, sourceUrl: String, title: String, category: String = "Politics") {
         if (sourceUrl.isBlank()) return
 
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        
+        // Granular Notification Preferences check by beat/category
+        val isBeatEnabled = prefs.getBoolean("notif_beat_$category", true)
+        if (!isBeatEnabled) {
+            return
+        }
+
         val notifiedSet = prefs.getStringSet(KEY_NOTIFIED_IDS, emptySet()) ?: emptySet()
 
         if (notifiedSet.contains(sourceUrl)) {
@@ -59,7 +66,7 @@ object BreakingNewsNotificationHelper {
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_alert)
-            .setContentTitle("🚨 BREAKING NEWS")
+            .setContentTitle("🚨 BREAKING NEWS ($category)")
             .setContentText(title)
             .setStyle(NotificationCompat.BigTextStyle().bigText(title))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -72,7 +79,7 @@ object BreakingNewsNotificationHelper {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
             try {
-                notificationManager.notify(NOTIFICATION_ID, builder.build())
+                notificationManager.notify(NOTIFICATION_ID + sourceUrl.hashCode(), builder.build())
 
                 val newSet = notifiedSet.toMutableSet()
                 newSet.add(sourceUrl)

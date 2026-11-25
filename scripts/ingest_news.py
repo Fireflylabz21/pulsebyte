@@ -91,7 +91,8 @@ VALID_TOPICS = [
     "Health", "Science & Technology", "Weather", "Lifestyle",
     "Cricket", "Enterprise AI", "India", "Startups & VC",
     "Crypto & Web3", "EV & Sustainability", "Personal Finance",
-    "Global Markets", "Gaming & Esports"
+    "Global Markets", "Gaming & Esports", "US", "UK", "Europe",
+    "Global", "World Economy"
 ]
 
 PROHIBITED_KEYWORDS = [
@@ -309,7 +310,7 @@ def run_ingestion_pipeline():
 
     print(f"Found {len(existing_urls)} existing URLs and {len(existing_titles)} existing story titles for deduplication.")
 
-        topic_feeds = {
+            topic_feeds = {
         "Politics": ["https://news.google.com/rss/search?q=Politics+Government&hl=en-US&gl=US&ceid=US:en"],
         "Crime": ["https://news.google.com/rss/search?q=Crime+Public+Safety&hl=en-US&gl=US&ceid=US:en"],
         "Business": [
@@ -355,6 +356,26 @@ def run_ingestion_pipeline():
         "Gaming & Esports": [
             "https://www.gamespot.com/feeds/news/",
             "https://news.google.com/rss/search?q=Video+Games+Esports+PlayStation+Xbox&hl=en-US&gl=US&ceid=US:en"
+        ],
+        "US": [
+            "https://feeds.npr.org/1001/rss.xml",
+            "https://news.google.com/rss/search?q=United+States+News&hl=en-US&gl=US&ceid=US:en"
+        ],
+        "UK": [
+            "https://feeds.bbci.co.uk/news/uk/rss.xml",
+            "https://news.google.com/rss/search?q=United+Kingdom+News&hl=en-GB&gl=GB&ceid=GB:en"
+        ],
+        "Europe": [
+            "https://www.euronews.com/rss?format=rss",
+            "https://news.google.com/rss/search?q=Europe+News&hl=en-US&gl=US&ceid=US:en"
+        ],
+        "Global": [
+            "https://feeds.bbci.co.uk/news/world/rss.xml",
+            "https://news.google.com/rss/search?q=World+News&hl=en-US&gl=US&ceid=US:en"
+        ],
+        "World Economy": [
+            "https://www.reutersagency.com/feed/?post_type=best&taxonomy=best_categories&term=financial-news",
+            "https://news.google.com/rss/search?q=World+Economy+Financial+Markets&hl=en-US&gl=US&ceid=US:en"
         ]
     }
 

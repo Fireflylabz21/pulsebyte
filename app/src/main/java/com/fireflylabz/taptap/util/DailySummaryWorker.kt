@@ -41,7 +41,7 @@ class DailySummaryWorker(context: Context, workerParams: WorkerParameters) : Wor
         )
 
         val builder = NotificationCompat.Builder(applicationContext, channelId)
-            .setSmallIcon(R.drawable.app_logo)
+            .setSmallIcon(android.R.drawable.ic_menu_info_details)
             .setContentTitle("PulseZinga Daily Summary")
             .setContentText("Your daily news summary is ready. Check out the latest updates!")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
